@@ -1,0 +1,29 @@
+#!/bin/sh
+set -ex
+
+DST_DIR="$1"
+PYTHON=python
+
+if [ -z "$DST_DIR" ]
+then
+    DST_DIR="."
+fi
+
+OPWD="$PWD"
+cd "$DST_DIR"
+quilt pop -a || true
+cd "$OPWD"
+
+dstdir="$DST_DIR/lib/wind"
+python debian/scripts/rfc3454.py "$dstdir/rfc3454.txt" > "$dstdir/rfc3454.txt.tmp"
+mv "$dstdir/rfc3454.txt.tmp" "$dstdir/rfc3454.txt"
+git add "$dstdir/rfc3454.txt"
+
+git rm "$dstdir/rfc3490.txt"
+git rm "$dstdir/rfc3491.txt"
+git rm "$dstdir/rfc4013.txt"
+git rm "$dstdir/rfc4518.txt"
+
+git rm -r "$DST_DIR/doc/standardisation"
+git rm "$DST_DIR/appl/popper/pop3.rfc1081"
+git rm "$DST_DIR/appl/popper/pop3e.rfc1082"

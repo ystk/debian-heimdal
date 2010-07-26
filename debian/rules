@@ -1,0 +1,153 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+DEB_INSTALL_DOCS_ALL =
+DEB_INSTALL_DOCS_heimdal-docs = $(filter-out $(DEB_INSTALL_CHANGELOGS_ALL),$(shell for f in README NEWS TODO BUGS AUTHORS THANKS; do if test -s $(DEB_SRCDIR)/$$f; then echo $(DEB_SRCDIR)/$$f; fi; done)) \
+	NEWS TODO
+
+DEB_DH_MAKESHLIBS_ARGS_libkdc2-heimdal = -V"libkdc2-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libasn1-8-heimdal = -V"libasn1-8-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libgssapi2-heimdal = -V"libgssapi2-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libhdb9-heimdal = -V"libhdb9-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libhx509-5-heimdal = -V"libhx509-5-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libkadm5srv8-heimdal = -V"libkadm5srv8-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libkadm5clnt7-heimdal = -V"libkadm5clnt7-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libkrb5-26-heimdal = -V"libkrb5-26-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libheimntlm0-heimdal = -V"libheimntlm0-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libroken18-heimdal = -V"libroken18-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+DEB_DH_MAKESHLIBS_ARGS_libwind0-heimdal = -V"libwind0-heimdal (>= 1.4.0~git20100221.dfsg.2-1)"
+
+DEB_DH_INSTALL_SOURCEDIR = debian/tmp
+
+DEB_CONFIGURE_LIBEXECDIR ="\$${prefix}/sbin"
+
+DEB_CONFIGURE_EXTRA_FLAGS := \
+	--enable-shared \
+	--with-kaserver \
+	--with-roken=/usr \
+	--without-des \
+	--with-openldap=/usr \
+	--with-sqlite3=/usr \
+	--with-readline-include=/usr/include/editline \
+	--with-readline-lib=/usr/lib \
+	--enable-kcm \
+	--with-hdbdir=/var/lib/heimdal-kdc
+
+# /var/lib/heimdal-kdc is 700
+DEB_FIXPERMS_EXCLUDE = heimdal-kdc
+
+clean::
+	# clean files not cleaned by make file
+	rm -f appl/rsh/login_access.c
+#	rm -f appl/rsh/rsh.cat1
+#	rm -f include/kadm5/*.h
+#	rm -f include/version.h.in
+#	rm -f krb5/libkrb5.ver
+#	rm -f lib/com_err/Makefile
+	rm -f lib/com_err/snprintf.c
+	rm -f lib/com_err/strlcpy.c
+#	rm -f lib/des/Makefile
+#	rm -f lib/editline/Makefile
+#	rm -f lib/krb5/libkrb5.ver
+#	rm -f lib/otp/snprintf.c
+#	rm -f lib/otp/strcasecmp.c
+#	rm -f lib/otp/strlcat.c
+#	rm -f lib/otp/strlcpy.c
+#	rm -f lib/otp/strlwr.c
+#	rm -f lib/otp/strncasecmp.c
+#	rm -f lib/sl/slc-gram.c
+#	rm -f lib/sl/slc-gram.h
+#	rm -f lib/sl/slc-lex.c
+	rm -f appl/ftp/ftpd/ftpcmd.c
+#	rm -f lib/otp/ndbm_wrap.c
+#	rm -f lib/otp/ndbm_wrap.h
+
+#	rm -f lib/wind/*.pyc
+	rm -f doc/heimdal.info
+	rm -f lib/hx509/sel-gram.c
+#	rm -f lib/roken/roken-glob.h
+
+	rm -f lib/sl/slc-gram.c
+	rm -f lib/sl/slc-gram.h
+	rm -f lib/sl/slc-lex.c
+
+binary-post-install/heimdal-dev::
+	for l in `find debian/tmp/usr/include -type d -printf "%P\n"`; do \
+		mkdir "debian/heimdal-dev/usr/include/$$l"; \
+		done
+	for l in `find debian/tmp/usr/include -mindepth 1 -maxdepth 1 -type f -printf "%P\n"`; do \
+		ln -s "heimdal/$$l" "debian/heimdal-dev/usr/include/$$l"; \
+		done
+	for l in `find debian/tmp/usr/include -mindepth 2 -maxdepth 2 -type f -printf "%P\n"`; do \
+		ln -s "../heimdal/$$l" "debian/heimdal-dev/usr/include/$$l"; \
+		done
+
+	# remove conflicting files
+	rm -rf debian/heimdal-dev/usr/include/ss
+	rm -f debian/heimdal-dev/usr/bin/mk_cmds
+	rm -f debian/heimdal-dev/usr/include/fnmatch.h
+	# remove unwanted files
+	rm -f debian/heimdal-dev/usr/lib/libss.a
+	rm -f debian/heimdal-dev/usr/lib/libss.la
+	rm -f debian/heimdal-dev/usr/lib/libss.so
+	rm -f debian/heimdal-dev/usr/lib/windc.la
+	# remove libtool recursive linking mess
+	sed -i "/dependency_libs/ s/'.*'/''/" debian/heimdal-dev/usr/lib/*.la
+
+binary-post-install/heimdal-multidev::
+	# remove conflicting files
+	rm -rf debian/heimdal-multidev/usr/include/heimdal/ss
+	rm -f debian/heimdal-multidev/usr/include/heimdal/fnmatch.h
+	# remove unwanted files
+	rm -f debian/heimdal-multidev/usr/lib/heimdal/libss.a
+	rm -f debian/heimdal-multidev/usr/lib/heimdal/libss.so
+	rm -f debian/heimdal-multidev/usr/lib/heimdal/windc.so
+	rm -f debian/heimdal-multidev/usr/lib/heimdal/windc.a
+	# rewrite symlinks to symlinks to point directly to file
+	for l in debian/heimdal-multidev/usr/lib/heimdal/*.so; do \
+		ln -s  -f ../`readlink $$l` $$l ; \
+		done
+
+
+binary-post-install/heimdal-servers::
+	mv debian/heimdal-servers/usr/sbin/kfd debian/heimdal-servers/usr/lib/heimdal-servers
+	mv debian/heimdal-servers/usr/sbin/ftpd debian/heimdal-servers/usr/lib/heimdal-servers
+	mv debian/heimdal-servers/usr/sbin/rshd debian/heimdal-servers/usr/lib/heimdal-servers
+	mv debian/heimdal-servers/usr/sbin/telnetd debian/heimdal-servers/usr/lib/heimdal-servers
+	mv debian/heimdal-servers/usr/sbin/popper debian/heimdal-servers/usr/lib/heimdal-servers
+	mv debian/heimdal-servers/usr/bin/login debian/heimdal-servers/usr/lib/heimdal-servers
+	rmdir debian/heimdal-servers/usr/sbin
+	rmdir debian/heimdal-servers/usr/bin
+
+binary-post-install/heimdal-servers-x::
+	mv debian/heimdal-servers-x/usr/sbin/kxd debian/heimdal-servers-x/usr/lib/heimdal-servers
+	rmdir debian/heimdal-servers-x/usr/sbin
+
+binary-post-install/heimdal-kdc::
+	mv debian/heimdal-kdc/usr/sbin/kdc debian/heimdal-kdc/usr/lib/heimdal-servers
+	mv debian/heimdal-kdc/usr/sbin/kadmind debian/heimdal-kdc/usr/lib/heimdal-servers
+	mv debian/heimdal-kdc/usr/sbin/kpasswdd debian/heimdal-kdc/usr/lib/heimdal-servers
+	install -m644 debian/extras/default debian/heimdal-kdc/etc/default/heimdal-kdc
+	install -m644 lib/hdb/hdb.schema debian/heimdal-kdc/etc/ldap/schema/hdb.schema
+	dh_fixperms -pheimdal-kdc
+	chmod 700 debian/heimdal-kdc/var/lib/heimdal-kdc
+
+binary-post-install/heimdal-clients::
+	mv debian/heimdal-clients/usr/bin/telnet debian/heimdal-clients/usr/bin/ktelnet
+	mv debian/heimdal-clients/usr/bin/ftp debian/heimdal-clients/usr/bin/kftp
+	mv debian/heimdal-clients/usr/share/man/man1/telnet.1 debian/heimdal-clients/usr/share/man/man1/ktelnet.1
+	mv debian/heimdal-clients/usr/share/man/man1/ftp.1 debian/heimdal-clients/usr/share/man/man1/kftp.1
+	mv debian/heimdal-clients/usr/bin/rsh debian/heimdal-clients/usr/bin/krsh
+	mv debian/heimdal-clients/usr/bin/rcp debian/heimdal-clients/usr/bin/krcp
+	mv debian/heimdal-clients/usr/bin/pagsh debian/heimdal-clients/usr/bin/kpagsh
+	mv debian/heimdal-clients/usr/bin/su debian/heimdal-clients/usr/bin/ksu
+	mv debian/heimdal-clients/usr/share/man/man1/rsh.1 debian/heimdal-clients/usr/share/man/man1/krsh.1
+	mv debian/heimdal-clients/usr/share/man/man1/rcp.1 debian/heimdal-clients/usr/share/man/man1/krcp.1
+	mv debian/heimdal-clients/usr/share/man/man1/pagsh.1 debian/heimdal-clients/usr/share/man/man1/kpagsh.1
+	mv debian/heimdal-clients/usr/share/man/man1/su.1 debian/heimdal-clients/usr/share/man/man1/ksu.1
+
+binary-post-install/heimdal-docs::
+	mv debian/heimdal-docs/usr/share/man/man5/krb5.conf.5 debian/heimdal-docs/usr/share/man/man5/krb5.conf.5heimdal
+	rm -f debian/heimdal-docs/usr/share/info/dir

@@ -1,0 +1,302 @@
+Source: heimdal
+Section: net
+Priority: optional
+Maintainer: Brian May <bam@debian.org>
+Uploaders: Jelmer Vernooij <jelmer@debian.org>
+Homepage: http://www.h5l.org/
+Standards-Version: 3.9.0
+Build-Depends: libncurses5-dev, bison, flex, debhelper (>= 7), libx11-dev, libxau-dev, libxt-dev, x11proto-core-dev, libedit-dev, libdb-dev, libssl-dev (>= 0.9.7), cdbs, libhesiod-dev, comerr-dev (>= 1.41.11), libldap2-dev, ss-dev, texinfo, python, libsqlite3-dev
+Build-Conflicts: heimdal-dev
+
+Package: heimdal-docs
+Section: doc
+Priority: extra
+Architecture: all
+Depends: ${misc:Depends}, dpkg (>= 1.15.4) | install-info
+Replaces: heimdal-lib (<< 0.3c-5), libkrb5-15-heimdal, heimdal-servers (<< 0.6.3-3)
+Conflicts: heimdal-lib (<< 0.3c-5)
+Suggests: heimdal-clients, heimdal-clients-x, heimdal-servers, heimdal-servers-x
+Description: Heimdal Kerberos - documentation
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes documentation (in info format) on how to
+ use Heimdal, and relevant standards for Kerberos.
+
+Package: heimdal-kdc
+Priority: extra
+Architecture: any
+Conflicts: kerberos4kth-kdc, heimdal-clients (<< 0.4e-3), heimdal-servers (<< 0.6.3-3), krb5-kdc, krb5-admin-server
+Depends: ${shlibs:Depends}, ${misc:Depends}, heimdal-clients, debconf (>= 0.5.00) | debconf-2.0, krb5-config, openbsd-inetd|inet-superserver
+Recommends: logrotate
+Replaces: heimdal-clients (<< 0.7.2-1), heimdal-servers (<< 0.4e-3)
+Suggests: heimdal-docs
+Description: Heimdal Kerberos - key distribution center (KDC)
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes the KDC (key distribution center) server,
+ which is designed to run on a secure computer and keeps track
+ of users' passwords. This is done using the Kerberos protocol in
+ such a way that the server computers do not need to know the
+ passwords.
+
+Package: heimdal-multidev
+Section: devel
+Priority: extra
+Architecture: any
+Conflicts: heimdal-clients (<< 0.4e-7), kerberos4kth-dev
+Depends: ${misc:Depends}, libasn1-8-heimdal (= ${binary:Version}), libkrb5-26-heimdal (= ${binary:Version}), libhdb9-heimdal (= ${binary:Version}), libkadm5srv8-heimdal (= ${binary:Version}), libkadm5clnt7-heimdal (= ${binary:Version}), libgssapi2-heimdal (= ${binary:Version}), libkafs0-heimdal (= ${binary:Version}), libwind0-heimdal (= ${binary:Version}), comerr-dev
+Replaces: heimdal-clients (<< 0.4e-7)
+Suggests: heimdal-docs
+Description: Heimdal Kerberos - Multi-implementation Development
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package provides versions of the Heimdal development files that
+ can be installed along-side MIT Kerberos development files.
+ Normally, heimdal-dev should be used. However if a package needs to
+ build  against both Heimdal Kerberos and MIT Kerberos, then the
+ multidev package should be used. 
+
+Package: heimdal-dev
+Depends: heimdal-multidev (= ${binary:Version}), ${misc:Depends}
+Section: devel
+Conflicts: libkrb5-dev
+Priority: extra
+Architecture: any
+Description: Heimdal Kerberos - development files
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This is the development package, required for developing
+ programs for Heimdal.
+
+Package: heimdal-clients-x
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, heimdal-clients
+Replaces: heimdal-clients (<< 0.2l-2)
+Conflicts: heimdal-clients (<< 0.2l-2), kerberos4kth-x11
+Suggests: heimdal-docs
+Description: Heimdal Kerberos - X11 client programs
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes Kerberos client programs for forwarding the X
+ connection securely to a remote computer.
+
+Package: heimdal-clients
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config
+Conflicts: telnet (<< 0.17-1), ftp (<< 0.16-1), rsh-client (<< 0.16.1-1), netstd, telnet-ssl (<< 0.14.9-2), ssltelnet, kerberos4kth-user, kerberos4kth-clients, otp, heimdal-servers (<< 0.4e-7), openafs-client (<< 1.2.2-3)
+Provides: telnet-client, ftp, rsh-client
+Suggests: heimdal-docs, heimdal-kcm
+Replaces: heimdal-servers (<< 0.6.3-12)
+Description: Heimdal Kerberos - clients
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes Kerberos utilities like kadmin, kinit, kpasswd and
+ klist. It also includes client programs like telnet and ftp that have been
+ compiled with Kerberos support.
+
+Package: heimdal-kcm
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - KCM daemon
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes the KCM daemon which can hold the credentials
+ for all users in the system. Access control is done with Unix-like
+ permissions. The daemon checks the access on all operations based on
+ the UID and GID of the user. The tickets are renewed as long as is
+ permitted by the KDC's policy.
+
+Package: heimdal-servers-x
+Priority: extra
+Architecture: any
+Conflicts: kerberos4kth-x11, heimdal-servers (<< 0.2l-3)
+Depends: ${shlibs:Depends}, ${misc:Depends}, openbsd-inetd|inet-superserver, heimdal-servers
+Suggests: heimdal-docs
+Replaces: heimdal-servers (<< 0.2l-3)
+Description: Heimdal Kerberos - X11 server programs
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes Kerberos server programs for forwarding the X
+ connection securely from a remote computer.
+
+Package: heimdal-servers
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, openbsd-inetd|inet-superserver, krb5-config
+Conflicts: telnetd,  wu-ftpd-academ (<< 2.5.0), netstd, heimdal-clients (<< 0.2l-2), telnetd-ssl, kerberos4kth-services, ftp-server, rsh-server, telnet-server, pop3-server
+Provides: ftp-server, rsh-server, telnet-server, pop3-server
+Suggests: heimdal-docs
+Replaces: heimdal-clients (<< 0.2l-2)
+Description: Heimdal Kerberos - server programs
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package includes servers such as telnetd and ftpd that have been
+ compiled with Heimdal support.
+
+Package: heimdal-dbg
+Priority: extra
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, libkrb5-26-heimdal (= ${binary:Version})
+Description: Heimdal Kerberos - key distribution center (KDC)
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the debugging symbols for all heimdal libraries.
+
+Package: libasn1-8-heimdal
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - ASN.1 library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the ASN.1 parser required for Heimdal.
+
+Package: libkrb5-26-heimdal
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - libraries
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the Kerberos 5 library.
+
+Package: libhdb9-heimdal
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: heimdal-lib (<< 0.3e-5)
+Conflicts: heimdal-libs (<< 0.3e-5)
+Description: Heimdal Kerberos - kadmin server library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the library for storing the KDC database.
+
+Package: libkadm5srv8-heimdal
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Libraries for Heimdal Kerberos
+ Heimdal is a free implementation of Kerberos 5, that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the server library for kadmin.
+
+Package: libkadm5clnt7-heimdal
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - kadmin client library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the client library for kadmin.
+
+Package: libgssapi2-heimdal
+Section: libs
+Architecture: any
+Conflicts: libgssapi2
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - GSSAPI support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the library for GSSAPI support.
+
+Package: libkafs0-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - KAFS support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the library for KAFS support.
+
+Package: libroken18-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - roken support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the library for roken support.
+
+Package: libotp0-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Conflicts: libotp0-kerberos4kth
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - OTP support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the library for OTP support.
+
+Package: libsl0-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Conflicts: libsl0-kerberos4kth
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - SL support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+ .
+ This package contains the library for SL support.
+
+Package: libkdc2-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - KDC support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+
+Package: libhx509-5-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - X509 support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+
+Package: libheimntlm0-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - NTLM support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.
+
+Package: libwind0-heimdal
+Section: libs
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos - NTLM support library
+ Heimdal is a free implementation of Kerberos 5 that aims to be
+ compatible with MIT Kerberos.

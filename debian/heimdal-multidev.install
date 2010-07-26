@@ -1,0 +1,3 @@
+usr/lib/*.a usr/lib/heimdal
+usr/lib/*.so usr/lib/heimdal
+usr/include/* usr/include/heimdal

@@ -1,0 +1,13 @@
+=== modified file 'cf/pthreads.m4'
+--- a/cf/pthreads.m4	2010-02-08 00:28:48 +0000
++++ b/cf/pthreads.m4	2010-02-08 00:46:50 +0000
+@@ -47,7 +47,7 @@
+ 	2.*)
+ 		native_pthread_support=yes
+ 		PTHREADS_CFLAGS=-pthread
+-		PTHREAD_LIBADD=-pthread
++		PTHREAD_LIBADD="-pthread -lpthread"
+ 		;;
+ 	esac
+ 	;;
+
