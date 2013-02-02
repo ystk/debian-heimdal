@@ -8,3 +8,5 @@ libedit
 027_rsh_use_ktelnet
 installsh
 030_autotools
+900_nfs_des
+999_CVE-2011-4862

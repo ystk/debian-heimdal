@@ -40,38 +40,88 @@ DEB_FIXPERMS_EXCLUDE = heimdal-kdc
 
 clean::
 	# clean files not cleaned by make file
+	rm -f appl/ftp/ftpd/ftpcmd.c
+	rm -f appl/login/login-protos.h
+	rm -f appl/rsh/limits_conf.c
 	rm -f appl/rsh/login_access.c
-#	rm -f appl/rsh/rsh.cat1
-#	rm -f include/kadm5/*.h
-#	rm -f include/version.h.in
-#	rm -f krb5/libkrb5.ver
-#	rm -f lib/com_err/Makefile
+	rm -f config.log
+	rm -f doc/heimdal.info
+	rm -f doc/hx509.info
+	rm -f include/asn1-common.h
+	rm -f include/asn1-template.h
+	rm -f include/crmf_asn1.h
+	rm -f include/der-private.h
+	rm -f include/heim-ipc.h
+	rm -f include/ocsp_asn1.h
+	rm -f include/pkcs10_asn1.h
+	rm -f kcm/kcm-protos.h
+	rm -f kdc/kdc-private.h
+	rm -f kdc/kdc-protos.h
+	rm -f lib/asn1/asn1_DHParameter.x
+	rm -f lib/asn1/asn1_err.c
+	rm -f lib/asn1/asn1_err.h
+	rm -f lib/asn1/asn1parse.c
+	rm -f lib/asn1/asn1parse.h
+	rm -f lib/asn1/cms_asn1-priv.h
+	rm -f lib/asn1/cms_asn1-priv.hx
+	rm -f lib/asn1/der-private.h
+	rm -f lib/asn1/der-protos.h
+	rm -f lib/asn1/digest_asn1-priv.h
+	rm -f lib/asn1/digest_asn1-priv.hx
+	rm -f lib/asn1/krb5_asn1-priv.h
+	rm -f lib/asn1/krb5_asn1-priv.hx
+	rm -f lib/asn1/kx509_asn1-priv.h
+	rm -f lib/asn1/kx509_asn1-priv.hx
+	rm -f lib/asn1/lex.c
+	rm -f lib/asn1/pkcs12_asn1-priv.h
+	rm -f lib/asn1/pkcs12_asn1-priv.hx
+	rm -f lib/asn1/pkcs8_asn1-priv.h
+	rm -f lib/asn1/pkcs8_asn1-priv.hx
+	rm -f lib/asn1/pkcs9_asn1-priv.h
+	rm -f lib/asn1/pkcs9_asn1-priv.hx
+	rm -f lib/asn1/pkinit_asn1-priv.h
+	rm -f lib/asn1/pkinit_asn1-priv.hx
+	rm -f lib/asn1/rfc2459_asn1-priv.h
+	rm -f lib/asn1/rfc2459_asn1-priv.hx
+	rm -f lib/asn1/test_asn1-priv.h
+	rm -f lib/asn1/test_asn1-priv.hx
 	rm -f lib/com_err/snprintf.c
 	rm -f lib/com_err/strlcpy.c
-#	rm -f lib/des/Makefile
-#	rm -f lib/editline/Makefile
-#	rm -f lib/krb5/libkrb5.ver
-#	rm -f lib/otp/snprintf.c
-#	rm -f lib/otp/strcasecmp.c
-#	rm -f lib/otp/strlcat.c
-#	rm -f lib/otp/strlcpy.c
-#	rm -f lib/otp/strlwr.c
-#	rm -f lib/otp/strncasecmp.c
-#	rm -f lib/sl/slc-gram.c
-#	rm -f lib/sl/slc-gram.h
-#	rm -f lib/sl/slc-lex.c
-	rm -f appl/ftp/ftpd/ftpcmd.c
-#	rm -f lib/otp/ndbm_wrap.c
-#	rm -f lib/otp/ndbm_wrap.h
-
-#	rm -f lib/wind/*.pyc
-	rm -f doc/heimdal.info
+	rm -f lib/gssapi/gssapi_asn1-priv.h
+	rm -f lib/gssapi/gssapi_asn1-priv.hx
+	rm -f lib/gssapi/gssapi_asn1-template.c
+	rm -f lib/gssapi/krb5/gsskrb5-private.h
+	rm -f lib/gssapi/ntlm/ntlm-private.h
+	rm -f lib/gssapi/spnego_asn1-priv.h
+	rm -f lib/gssapi/spnego_asn1-priv.hx
+	rm -f lib/gssapi/spnego_asn1-template.c
+	rm -f lib/gssapi/spnego/spnego-private.h
+	rm -f lib/hdb/hdb-private.h
+	rm -f lib/hdb/hdb-protos.h
+	rm -f lib/hx509/hx509-private.h
+	rm -f lib/hx509/hx509-protos.h
 	rm -f lib/hx509/sel-gram.c
-#	rm -f lib/roken/roken-glob.h
-
+	rm -f lib/kadm5/kadm5-private.h
+	rm -f lib/kadm5/kadm5-protos.h
+	rm -f lib/krb5/krb5-private.h
+	rm -f lib/krb5/krb5-protos.h
+	rm -f lib/ntlm/heimntlm-protos.h
 	rm -f lib/sl/slc-gram.c
 	rm -f lib/sl/slc-gram.h
 	rm -f lib/sl/slc-lex.c
+	rm -f lib/wind/bidi_table.c
+	rm -f lib/wind/bidi_table.h
+	rm -f lib/wind/combining_table.c
+	rm -f lib/wind/combining_table.h
+	rm -f lib/wind/errorlist_table.c
+	rm -f lib/wind/errorlist_table.h
+	rm -f lib/wind/map_table.c
+	rm -f lib/wind/map_table.h
+	rm -f lib/wind/normalize_table.c
+	rm -f lib/wind/normalize_table.h
+	rm -f lib/wind/*.pyc
+
+
 
 binary-post-install/heimdal-dev::
 	for l in `find debian/tmp/usr/include -type d -printf "%P\n"`; do \

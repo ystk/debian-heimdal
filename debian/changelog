@@ -1,3 +1,15 @@
+heimdal (1.4.0~git20100726.dfsg.1-2+squeeze1) squeeze-security; urgency=high
+
+  * Apply patch from FreeBSD to fix CVE-2011-4862
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Sun, 25 Dec 2011 14:40:48 +0100
+
+heimdal (1.4.0~git20100726.dfsg.1-2) stable; urgency=low
+
+  * NFS needs same dispensation to use DES as AFS (closes: #629276).
+
+ -- Brian May <bam@debian.org>  Mon, 20 Jun 2011 13:40:15 +1000
+
 heimdal (1.4.0~git20100726.dfsg.1-1) unstable; urgency=low
 
   * New upstream version.
