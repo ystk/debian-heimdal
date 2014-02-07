@@ -53,17 +53,17 @@ struct getargs args[] = {
     { "delegation-credential-cache",0,arg_string, &delegation_cred_str,
       NP_("where to find the ticket use for delegation", ""), "cache"},
     { "canonicalize",	0, arg_flag, &canonicalize_flag,
-      NP_("canonicalize the principal", "") },
+      NP_("canonicalize the principal", ""), NULL },
     { "forwardable",	0, arg_flag, &forwardable_flag,
-      NP_("forwardable ticket requested", "")},
-    { "transit-check",	0,   arg_negative_flag, &transit_flag },
+      NP_("forwardable ticket requested", ""), NULL},
+    { "transit-check",	0,   arg_negative_flag, &transit_flag, NULL, NULL },
     { "enctype",	'e', arg_string, &etype_str,
       NP_("encryption type to use", ""), "enctype"},
     { "impersonate",	0,   arg_string, &impersonate_str,
       NP_("client to impersonate", ""), "principal"},
-    { "name-type",		0,   arg_string, &nametype_str },
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "name-type",	0,   arg_string, &nametype_str, NULL, NULL },
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
 static void
@@ -85,7 +85,7 @@ main(int argc, char **argv)
     krb5_creds *out;
     int optidx = 0;
     krb5_get_creds_opt opt;
-    krb5_principal server;
+    krb5_principal server = NULL;
     krb5_principal impersonate = NULL;
 
     setprogname (argv[0]);
@@ -108,9 +108,6 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (argc != 1)
-	usage (1);
-
     if(cache_str) {
 	ret = krb5_cc_resolve(context, cache_str, &cache);
 	if (ret)
@@ -130,7 +127,7 @@ main(int argc, char **argv)
 
 	ret = krb5_string_to_enctype(context, etype_str, &enctype);
 	if (ret)
-	    krb5_errx (context, 1, N_("unrecognized enctype: %s", ""), 
+	    krb5_errx (context, 1, N_("unrecognized enctype: %s", ""),
 		       etype_str);
 	krb5_get_creds_opt_set_enctype(context, opt, enctype);
     }
@@ -190,15 +187,38 @@ main(int argc, char **argv)
 				       KRB5_GC_CONSTRAINED_DELEGATION);
     }
 
-    ret = krb5_parse_name(context, argv[0], &server);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
-
     if (nametype_str) {
-	ret = krb5_parse_nametype(context, nametype_str,
-				  &server->name.name_type);
+	int32_t nametype;
+	char *sname = NULL;
+	char *hname = NULL;
+
+	ret = krb5_parse_nametype(context, nametype_str, &nametype);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_parse_nametype");
+
+	if (nametype == KRB5_NT_SRV_HST && argc == 2) {
+	    sname = argv[0];
+	    hname = argv[1];
+	    ret = krb5_sname_to_principal(context, hname, sname,
+					   KRB5_NT_SRV_HST, &server);
+	    if (ret)
+		krb5_err(context, 1, ret, "krb5_sname_to_principal %s/%s",
+			 (sname && *sname) ? sname : "<default>",
+			 (hname && *hname) ? hname : "<default>");
+	} else {
+	    if (argc != 1)
+		usage(1);
+	    ret = krb5_parse_name(context, argv[0], &server);
+	    if (ret)
+		krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
+	    server->name.name_type = (NAME_TYPE)nametype;
+	}
+    } else if (argc == 1) {
+	ret = krb5_parse_name(context, argv[0], &server);
+	if (ret)
+	    krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
+    } else {
+	usage(1);
     }
 
     ret = krb5_get_creds(context, opt, cache, server, &out);

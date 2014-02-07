@@ -1,4 +1,2 @@
-usr/bin/krb5-config
-usr/share/man/man1/krb5-config.1
+usr/lib/*/*.la
 usr/share/man/man3
-usr/lib/*.la

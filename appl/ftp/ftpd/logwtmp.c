@@ -64,11 +64,13 @@ RCSID("$Id$");
 #include <roken.h>
 #include "extern.h"
 
+#ifndef HAVE_UTMPX_H
 #ifndef WTMP_FILE
 #ifdef _PATH_WTMP
 #define WTMP_FILE _PATH_WTMP
 #else
 #define WTMP_FILE "/var/adm/wtmp"
+#endif
 #endif
 #endif
 
@@ -105,15 +107,26 @@ static void
 ftpd_logwtmp_wtmp(char *line, char *name, char *host)
 {
     static int init = 0;
+#ifdef WTMP_FILE
     static int fd;
+#endif
 #ifdef WTMPX_FILE
     static int fdx;
 #endif
+#ifdef HAVE_UTMP_H
     struct utmp ut;
-#ifdef WTMPX_FILE
+#endif
+#if defined(WTMPX_FILE) || defined(HAVE_UTMPX_H)
     struct utmpx utx;
 #endif
+#if defined(WTMP_FILE) || defined(WTMPX_FILE)
+    ssize_t ret;
+#endif
 
+#ifdef HAVE_UTMPX_H
+    memset(&utx, 0, sizeof(struct utmpx));
+#endif
+#ifdef HAVE_UTMP_H
     memset(&ut, 0, sizeof(struct utmp));
 #ifdef HAVE_STRUCT_UTMP_UT_TYPE
     if(name[0])
@@ -130,8 +143,9 @@ ftpd_logwtmp_wtmp(char *line, char *name, char *host)
     strncpy(ut.ut_host, host, sizeof(ut.ut_host));
 #endif
     ut.ut_time = time(NULL);
+#endif
 
-#ifdef WTMPX_FILE
+#if defined(WTMPX_FILE) || defined(HAVE_UTMPX_H)
     strncpy(utx.ut_line, line, sizeof(utx.ut_line));
     strncpy(utx.ut_user, name, sizeof(utx.ut_user));
     strncpy(utx.ut_host, host, sizeof(utx.ut_host));
@@ -154,19 +168,31 @@ ftpd_logwtmp_wtmp(char *line, char *name, char *host)
 	utx.ut_type = DEAD_PROCESS;
 #endif
 
+#ifdef HAVE_UTMPX_H
+    pututxline(&utx);
+#endif
+
     if(!init){
+#ifdef WTMP_FILE
 	fd = open(WTMP_FILE, O_WRONLY|O_APPEND, 0);
+#endif
 #ifdef WTMPX_FILE
 	fdx = open(WTMPX_FILE, O_WRONLY|O_APPEND, 0);
 #endif
 	init = 1;
     }
+#if defined(WTMP_FILE) || defined(WTMPX_FILE)
     if(fd >= 0) {
-	write(fd, &ut, sizeof(struct utmp)); /* XXX */
+#ifdef WTMP_FILE
+	ret = write(fd, &ut, sizeof(struct utmp)); /* XXX */
+#endif
 #ifdef WTMPX_FILE
-	write(fdx, &utx, sizeof(struct utmpx));
-#endif	
+	ret = write(fdx, &utx, sizeof(struct utmpx));
+#endif
+	if (ret == -1)
+	    syslog(LOG_ERR, "ftpd_logwtmp_wtmp(): write(2) failed: %m");
     }
+#endif
 }
 
 #endif /* !HAVE_ASL_H */

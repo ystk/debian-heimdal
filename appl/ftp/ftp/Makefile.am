@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += $(WFLAGS_LITE)
+
 AM_CPPFLAGS += -I$(srcdir)/../common $(INCLUDE_readline) $(INCLUDE_hcrypto)
 
 bin_PROGRAMS = ftp
@@ -41,4 +43,4 @@ LDADD = \
 	$(LIB_roken) \
 	$(LIB_readline)
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

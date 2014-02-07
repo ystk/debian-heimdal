@@ -42,6 +42,8 @@
 
 #include <roken.h>
 
+#ifdef USE_HCRYPTO_TFM
+
 #include "tfm.h"
 
 static void
@@ -140,7 +142,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     memcpy(p, from, flen);
     p += flen;
     assert((p - p0) == size - 1);
-    
+
     fp_init_multi(&enc, &dec, NULL);
     fp_read_unsigned_bin(&dec, p0, size - 1);
     free(p0);
@@ -319,7 +321,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
 {
     unsigned char *ptr;
     int res;
-    size_t size;
+    int size;
     fp_int in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
@@ -561,8 +563,15 @@ const RSA_METHOD hc_rsa_tfm_method = {
     tfm_rsa_generate_key
 };
 
+#endif
+
 const RSA_METHOD *
 RSA_tfm_method(void)
 {
+#ifdef USE_HCRYPTO_TFM
     return &hc_rsa_tfm_method;
+#else
+    return NULL;
+#endif
 }
+

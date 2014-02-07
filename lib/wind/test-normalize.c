@@ -47,7 +47,7 @@
 static size_t
 parse_vector(char *buf, uint32_t *v)
 {
-    char *last;
+    char *last = NULL;
     unsigned ret = 0;
     const char *n;
     unsigned u;
@@ -65,6 +65,18 @@ parse_vector(char *buf, uint32_t *v)
 	++ret;
     }
     return ret;
+}
+
+static void
+dump_vector(const char * msg, uint32_t * v, size_t len)
+{
+    size_t i;
+
+    printf("%s: (%d) ", msg, (int)len);
+    for (i=0; i < len; i++) {
+	printf("%s%x", (i > 0? " ":""), v[i]);
+    }
+    printf("\n");
 }
 
 static int
@@ -109,11 +121,15 @@ test(char *buf, unsigned lineno)
     }
     if (out_len != norm_len) {
 	printf("%u: wrong out len (%s)\n", lineno, c);
+	dump_vector("Expected", out, out_len);
+	dump_vector("Received", tmp, norm_len);
 	free(tmp);
 	return 1;
     }
     if (memcmp(out, tmp, out_len * sizeof(uint32_t)) != 0) {
 	printf("%u: wrong out data (%s)\n", lineno, c);
+	dump_vector("Expected", out, out_len);
+	dump_vector("Received", tmp, norm_len);
 	free(tmp);
 	return 1;
     }

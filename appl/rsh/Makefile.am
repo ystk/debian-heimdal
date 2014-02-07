@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += -I$(srcdir)/../login $(INCLUDE_hcrypto)
 
+WFLAGS += $(WFLAGS_LITE)
+
 bin_PROGRAMS = rsh
 
 man_MANS = rsh.1 rshd.8
@@ -25,4 +27,4 @@ LDADD = $(LIB_kafs) \
 	$(LIB_hcrypto) \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

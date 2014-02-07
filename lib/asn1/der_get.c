@@ -48,9 +48,28 @@ der_get_unsigned (const unsigned char *p, size_t len,
     unsigned val = 0;
     size_t oldlen = len;
 
-    if (len == sizeof(unsigned) + 1 && p[0] == 0)
+    if (len == sizeof(val) + 1 && p[0] == 0)
 	;
-    else if (len > sizeof(unsigned))
+    else if (len > sizeof(val))
+	return ASN1_OVERRUN;
+
+    while (len--)
+	val = val * 256 + *p++;
+    *ret = val;
+    if(size) *size = oldlen;
+    return 0;
+}
+
+int
+der_get_unsigned64 (const unsigned char *p, size_t len,
+		    uint64_t *ret, size_t *size)
+{
+    uint64_t val = 0;
+    size_t oldlen = len;
+
+    if (len == sizeof(val) + 1 && p[0] == 0)
+	;
+    else if (len > sizeof(val))
 	return ASN1_OVERRUN;
 
     while (len--)
@@ -67,7 +86,27 @@ der_get_integer (const unsigned char *p, size_t len,
     int val = 0;
     size_t oldlen = len;
 
-    if (len > sizeof(int))
+    if (len > sizeof(val))
+	return ASN1_OVERRUN;
+
+    if (len > 0) {
+	val = (signed char)*p++;
+	while (--len)
+	    val = val * 256 + *p++;
+    }
+    *ret = val;
+    if(size) *size = oldlen;
+    return 0;
+}
+
+int
+der_get_integer64 (const unsigned char *p, size_t len,
+		   int64_t *ret, size_t *size)
+{
+    int64_t val = 0;
+    size_t oldlen = len;
+
+    if (len > sizeof(val))
 	return ASN1_OVERRUN;
 
     if (len > 0) {
@@ -141,9 +180,9 @@ der_get_general_string (const unsigned char *p, size_t len,
 	 * an strings in the NEED_PREAUTH case that includes a
 	 * trailing NUL.
 	 */
-	while (p1 - p < len && *p1 == '\0')
+	while ((size_t)(p1 - p) < len && *p1 == '\0')
 	    p1++;
-       if (p1 - p != len)
+       if ((size_t)(p1 - p) != len)
 	    return ASN1_BAD_CHARACTER;
     }
     if (len > len + 1)
@@ -167,17 +206,24 @@ der_get_utf8string (const unsigned char *p, size_t len,
 }
 
 int
-der_get_printable_string (const unsigned char *p, size_t len,
-			  heim_printable_string *str, size_t *size)
+der_get_printable_string(const unsigned char *p, size_t len,
+			 heim_printable_string *str, size_t *size)
 {
-    return der_get_general_string(p, len, str, size);
+    str->length = len;
+    str->data = malloc(len + 1);
+    if (str->data == NULL)
+	return ENOMEM;
+    memcpy(str->data, p, len);
+    ((char *)str->data)[len] = '\0';
+    if(size) *size = len;
+    return 0;
 }
 
 int
-der_get_ia5_string (const unsigned char *p, size_t len,
-		    heim_ia5_string *str, size_t *size)
+der_get_ia5_string(const unsigned char *p, size_t len,
+		   heim_ia5_string *str, size_t *size)
 {
-    return der_get_general_string(p, len, str, size);
+    return der_get_printable_string(p, len, str, size);
 }
 
 int

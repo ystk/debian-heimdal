@@ -41,6 +41,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	gssapi_mech_interface m;
 	struct _gss_name *name;
 	gss_name_t new_canonical_name;
+	int composite = 0;
 
 	*minor_status = 0;
 	*output_name = 0;
@@ -50,8 +51,17 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	 */
 	if (len < 2)
 		return (GSS_S_BAD_NAME);
-	if (p[0] != 4 || p[1] != 1)
+	if (p[0] != 4)
 		return (GSS_S_BAD_NAME);
+	switch (p[1]) {
+	case 1:	/* non-composite name */
+		break;
+	case 2:	/* composite name */
+		composite = 1;
+		break;
+	default:
+		return (GSS_S_BAD_NAME);
+	}
 	p += 2;
 	len -= 2;
 
@@ -106,7 +116,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	p += 4;
 	len -= 4;
 
-	if (len != t)
+	if (!composite && len != t)
 		return (GSS_S_BAD_NAME);
 
 	m = __gss_get_mechanism(&mech_oid);
@@ -159,11 +169,11 @@ _gss_import_export_name(OM_uint32 *minor_status,
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *        the error code.
- *  
+ *
  * @ingroup gssapi
  */
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_import_name(OM_uint32 *minor_status,
     const gss_buffer_t input_name_buffer,
     const gss_OID input_name_type,
@@ -209,7 +219,7 @@ gss_import_name(OM_uint32 *minor_status,
 		return (GSS_S_FAILURE);
 	}
 
-	SLIST_INIT(&name->gn_mn);
+	HEIM_SLIST_INIT(&name->gn_mn);
 
 	major_status = _gss_copy_oid(minor_status,
 	    name_type, &name->gn_type);
@@ -228,10 +238,10 @@ gss_import_name(OM_uint32 *minor_status,
 	 * for those supported this nametype.
 	 */
 
-	SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 		int present = 0;
 
-		major_status = gss_test_oid_set_member(minor_status, 
+		major_status = gss_test_oid_set_member(minor_status,
 		    name_type, m->gm_name_types, &present);
 
 		if (major_status || present == 0)
@@ -257,14 +267,14 @@ gss_import_name(OM_uint32 *minor_status,
 
 		mn->gmn_mech = &m->gm_mech;
 		mn->gmn_mech_oid = &m->gm_mech_oid;
-		SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
+		HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
 	}
 
 	/*
 	 * If we can't find a mn for the name, bail out already here.
 	 */
 
-	mn = SLIST_FIRST(&name->gn_mn);
+	mn = HEIM_SLIST_FIRST(&name->gn_mn);
 	if (!mn) {
 		*minor_status = 0;
 		major_status = GSS_S_NAME_NOT_MN;

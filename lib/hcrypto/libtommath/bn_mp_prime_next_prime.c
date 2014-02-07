@@ -22,7 +22,7 @@
  */
 int mp_prime_next_prime(mp_int *a, int t, int bbs_style)
 {
-   int      err, res, x, y;
+   int      err, res = MP_NO, x, y;
    mp_digit res_tab[PRIME_SIZE], step, kstep;
    mp_int   b;
 
@@ -142,8 +142,8 @@ int mp_prime_next_prime(mp_int *a, int t, int bbs_style)
       }
 
       /* is this prime? */
-      for (x = 0; x < t; x++) {
-          mp_set(&b, ltm_prime_tab[t]);
+      for (x = 0; x < t && x < PRIME_SIZE; x++) {
+          mp_set(&b, ltm_prime_tab[x]);
           if ((err = mp_prime_miller_rabin(a, &b, &res)) != MP_OKAY) {
              goto LBL_ERR;
           }

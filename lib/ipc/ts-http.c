@@ -44,8 +44,8 @@ static int help_flag;
 static int version_flag;
 
 static struct getargs args[] = {
-    {	"help",		'h',	arg_flag,   &help_flag },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"help",		'h',	arg_flag,   &help_flag,    NULL, NULL },
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -119,10 +119,10 @@ main(int argc, char **argv)
 
     if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-	
+
     if (help_flag)
 	usage(0);
-    
+
     if (version_flag) {
 	print_version(NULL);
 	exit(0);

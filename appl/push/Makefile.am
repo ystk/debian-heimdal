@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_hesiod)
 
+WFLAGS += $(WFLAGS_LITE)
+
 bin_SCRIPTS		= pfrom
 
 libexec_PROGRAMS	= push
@@ -18,7 +20,7 @@ man_MANS = push.8 pfrom.1
 
 CLEANFILES = pfrom
 
-EXTRA_DIST = pfrom.in $(man_MANS)
+EXTRA_DIST = NTMakefile pfrom.in $(man_MANS)
 
 LDADD = $(LIB_krb5) \
 	$(LIB_hcrypto) \

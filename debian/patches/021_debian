@@ -1,33 +1,6 @@
-Index: heimdal-1.3.1.dfsg.1/kdc/kdc.8
-===================================================================
---- heimdal-1.3.1.dfsg.1.orig/kdc/kdc.8	2009-11-22 02:41:51.000000000 +1100
-+++ heimdal-1.3.1.dfsg.1/kdc/kdc.8	2009-11-24 11:10:25.099669790 +1100
-@@ -77,7 +77,7 @@
- .Fl -config-file= Ns Ar file
- .Xc
- Specifies the location of the config file, the default is
--.Pa /var/heimdal/kdc.conf .
-+.Pa /etc/heimdal-kdc/kdc.conf .
- This is the only value that can't be specified in the config file.
- .It Xo
- .Fl p ,
-Index: heimdal-1.3.1.dfsg.1/doc/setup.texi
-===================================================================
---- heimdal-1.3.1.dfsg.1.orig/doc/setup.texi	2009-11-22 02:41:51.000000000 +1100
-+++ heimdal-1.3.1.dfsg.1/doc/setup.texi	2009-11-24 11:10:25.111669774 +1100
-@@ -363,7 +363,7 @@
- as @samp{749/tcp}.
- 
- Access to the administration server is controlled by an ACL file,
--(default @file{/var/heimdal/kadmind.acl}.) The file has the following
-+(default @file{/etc/heimdal-kdc/kadmind.acl}.) The file has the following
- syntax:
- @smallexample
- principal       [priv1,priv2,...]       [glob-pattern]
-Index: heimdal-1.3.1.dfsg.1/appl/telnet/telnetd/telnetd.h
-===================================================================
---- heimdal-1.3.1.dfsg.1.orig/appl/telnet/telnetd/telnetd.h	2009-11-22 02:41:51.000000000 +1100
-+++ heimdal-1.3.1.dfsg.1/appl/telnet/telnetd/telnetd.h	2009-11-24 11:10:25.213453707 +1100
+=== modified file 'appl/telnet/telnetd/telnetd.h'
+--- old/appl/telnet/telnetd/telnetd.h	2011-07-20 16:16:05 +0000
++++ new/appl/telnet/telnetd/telnetd.h	2011-07-20 16:18:20 +0000
 @@ -212,7 +212,7 @@
  #endif
  
@@ -37,3 +10,30 @@ Index: heimdal-1.3.1.dfsg.1/appl/telnet/telnetd/telnetd.h
  
  /* fallbacks */
  
+
+=== modified file 'doc/setup.texi'
+--- old/doc/setup.texi	2011-07-20 16:16:05 +0000
++++ new/doc/setup.texi	2011-07-20 16:18:20 +0000
+@@ -365,7 +365,7 @@
+ as @samp{749/tcp}.
+ 
+ Access to the administration server is controlled by an ACL file,
+-(default @file{/var/heimdal/kadmind.acl}.) The file has the following
++(default @file{/etc/heimdal-kdc/kadmind.acl}.) The file has the following
+ syntax:
+ @smallexample
+ principal       [priv1,priv2,...]       [glob-pattern]
+
+=== modified file 'kdc/kdc.8'
+--- old/kdc/kdc.8	2011-07-20 16:17:26 +0000
++++ new/kdc/kdc.8	2011-07-20 16:18:20 +0000
+@@ -74,7 +74,7 @@
+ .Bl -tag -width Ds
+ .It Fl c Ar file , Fl Fl config-file= Ns Ar file
+ Specifies the location of the config file, the default is
+-.Pa /var/heimdal/kdc.conf .
++.Pa /etc/heimdal-kdc/kdc.conf .
+ This is the only value that can't be specified in the config file.
+ .It Fl p , Fl Fl no-require-preauth
+ Turn off the requirement for pre-autentication in the initial AS-REQ
+

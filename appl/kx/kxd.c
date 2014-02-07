@@ -336,7 +336,7 @@ doit_conn (kx_context *kc,
     }
 #endif
     memset (&__ss_addr, 0, sizeof(__ss_addr));
-    addr->sa_family = kc->thisaddr->sa_family;
+    __ss_addr.ss_family = kc->thisaddr->sa_family;
     if (kc->thisaddr_len > sizeof(__ss_addr)) {
 	syslog(LOG_ERR, "error in af");
 	return 1;
@@ -403,6 +403,7 @@ close_connection(int fd, const char *message)
     char *p;
     int lsb = 0;
     size_t mlen;
+    ssize_t ret;
 
     mlen = strlen(message);
     if(mlen > 255)
@@ -424,7 +425,7 @@ close_connection(int fd, const char *message)
     p += mlen;
     while((p - buf) % 4)		/* pad to multiple of 4 bytes */
 	*p++ = 0;
-	
+
     /* now fill in length of additional data */
     if(lsb) {
 	buf[6] = (p - buf - 8) / 4;
@@ -433,7 +434,7 @@ close_connection(int fd, const char *message)
 	buf[6] = 0;
 	buf[7] = (p - buf - 8) / 4;
     }
-    write(fd, buf, p - buf);
+    ret = write(fd, buf, p - buf);
     close(fd);
 }
 
@@ -502,7 +503,7 @@ doit_passive (kx_context *kc,
     memcpy (p, xauthfile, len);
     p += len;
     rem -= len;
-	
+
     if(kx_write (kc, sock, msg, p - msg) < 0) {
 	syslog (LOG_ERR, "write: %m");
 	cleanup(nsockets, sockets);
@@ -515,7 +516,7 @@ doit_passive (kx_context *kc,
 	int i;
 	int ret;
 	int cookiesp = TRUE;
-	
+
 	FD_ZERO(&fds);
 	if (sock >= FD_SETSIZE) {
 	    syslog (LOG_ERR, "fd too large");
@@ -640,7 +641,7 @@ doit_active (kx_context *kc,
 
     p = msg;
     *p++ = ACK;
-	
+
     if(kx_write (kc, sock, msg, p - msg) < 0) {
 	syslog (LOG_ERR, "write: %m");
 	return 1;
@@ -648,7 +649,7 @@ doit_active (kx_context *kc,
     for (;;) {
 	pid_t child;
 	int len;
-	
+
 	len = kx_read (kc, sock, msg, sizeof(msg));
 	if (len < 0) {
 	    syslog (LOG_ERR, "read: %m");
@@ -707,12 +708,13 @@ static int help_flag		= 0;
 
 struct getargs args[] = {
     { "inetd",		'i',	arg_negative_flag,	&inetd_flag,
-      "Not started from inetd" },
-    { "tcp",		't',	arg_flag,	&tcp_flag,	"Use TCP" },
+      "Not started from inetd", NULL },
+    { "tcp",		't',	arg_flag,	&tcp_flag,	"Use TCP",
+      NULL },
     { "port",		'p',	arg_string,	&port_str,	"Use this port",
       "port" },
-    { "version",	0, 	arg_flag,		&version_flag },
-    { "help",		0, 	arg_flag,		&help_flag }
+    { "version",	0, 	arg_flag,	&version_flag,	NULL, NULL },
+    { "help",		0, 	arg_flag,	&help_flag,	NULL, NULL }
 };
 
 static void

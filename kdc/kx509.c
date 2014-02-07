@@ -259,7 +259,7 @@ build_certificate(krb5_context context,
     hx509_cert_free(cert);
     if (ret)
 	goto out;
-		
+
     return 0;
 out:
     if (env)
@@ -355,7 +355,7 @@ _kdc_do_kx509(krb5_context context,
 		krb5_xfree(expected);
 		goto out;
 	    }
-	    
+
 	    ret = KRB5KDC_ERR_SERVER_NOMATCH;
 	    krb5_set_error_message(context, ret,
 				   "User %s used wrong Kx509 service "
@@ -381,15 +381,15 @@ _kdc_do_kx509(krb5_context context,
 
     /* Verify that the key is encoded RSA key */
     {
-	RSAPublicKey key;
-	size_t size;
+	RSAPublicKey rsapkey;
+	size_t rsapkeysize;
 
 	ret = decode_RSAPublicKey(req->pk_key.data, req->pk_key.length,
-				  &key, &size);
+				  &rsapkey, &rsapkeysize);
 	if (ret)
 	    goto out;
-	free_RSAPublicKey(&key);
-	if (size != req->pk_key.length) {
+	free_RSAPublicKey(&rsapkey);
+	if (rsapkeysize != req->pk_key.length) {
 	    ret = ASN1_EXTRA_DATA;
 	    goto out;
 	}

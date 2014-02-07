@@ -46,7 +46,7 @@
 #define DPO(data,offset) ((void *)(((unsigned char *)data)  + offset))
 
 
-struct asn1_type_func prim[] = {
+static struct asn1_type_func prim[] = {
 #define el(name, type) {				\
 	(asn1_type_encode)der_put_##name,		\
 	(asn1_type_decode)der_get_##name,		\
@@ -66,7 +66,9 @@ struct asn1_type_func prim[] = {
     el(integer, int),
     el(heim_integer, heim_integer),
     el(integer, int),
+    el(integer64, int64_t),
     el(unsigned, unsigned),
+    el(unsigned64, uint64_t),
     el(general_string, heim_general_string),
     el(octet_string, heim_octet_string),
     elber(octet_string, heim_octet_string),
@@ -148,7 +150,7 @@ bmember_put_bit(unsigned char *p, const void *data, unsigned int bit,
 
 int
 _asn1_decode(const struct asn1_template *t, unsigned flags,
-	     const unsigned char *p, size_t len, void *data, size_t *size)
+	     const unsigned char *p, size_t len, void *data, size_t *retsize)
 {
     size_t elements = A1_HEADER_LEN(t);
     size_t oldlen = len;
@@ -224,7 +226,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	     * Only allow indefinite encoding for OCTET STRING and BER
 	     * for now. Should handle BIT STRING too.
 	     */
- 
+
 	    if (dertype != A1_TAG_TYPE(t->tt) && (flags & A1_PF_ALLOW_BER)) {
 		const struct asn1_template *subtype = t->ptr;
 		subtype++; /* skip header */
@@ -293,7 +295,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    size_t newsize;
 	    void *el = DPO(data, t->offset);
 
-	    /* 
+	    /*
 	     * INDEFINITE primitive types are one element after the
 	     * same type but non-INDEFINITE version.
 	    */
@@ -346,7 +348,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	case A1_OP_BMEMBER: {
 	    const struct asn1_template *bmember = t->ptr;
 	    size_t size = bmember->offset;
-	    size_t elements = A1_HEADER_LEN(bmember);
+	    size_t els = A1_HEADER_LEN(bmember);
 	    size_t pos = 0;
 
 	    bmember++;
@@ -357,7 +359,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		return ASN1_OVERRUN;
 	    p++; len--;
 
-	    while (elements && len) {
+	    while (els && len) {
 		while (bmember->offset / 8 > pos / 8) {
 		    if (len < 1)
 			break;
@@ -366,7 +368,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		}
 		if (len) {
 		    bmember_get_bit(p, data, bmember->offset, size);
-		    elements--; bmember++;
+		    els--; bmember++;
 		}
 	    }
 	    len = 0;
@@ -377,7 +379,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    unsigned int *element = DPO(data, choice->offset);
 	    size_t datalen;
 	    unsigned int i;
-	   
+
 	    for (i = 1; i < A1_HEADER_LEN(choice) + 1; i++) {
 		/* should match first tag instead, store it in choice.tt */
 		ret = _asn1_decode(choice[i].ptr, 0, p, len,
@@ -395,7 +397,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		    return ASN1_BAD_ID;
 
 		*element = 0;
-		ret = der_get_octet_string(p, len, 
+		ret = der_get_octet_string(p, len,
 					   DPO(data, choice->tt), &datalen);
 		if (ret)
 		    return ret;
@@ -417,10 +419,10 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
     oldlen -= len;
 
-    if (size)
-	*size = oldlen;
+    if (retsize)
+	*retsize = oldlen;
 
-    /* 
+    /*
      * saved the raw bits if asked for it, useful for signature
      * verification.
      */
@@ -439,7 +441,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 }
 
 int
-_asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const void *data, size_t *size)
+_asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len,
+	     const void *data, size_t *retsize)
 {
     size_t elements = A1_HEADER_LEN(t);
     int ret = 0;
@@ -598,7 +601,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		break;
 
 	    elptr += ellen * (el->len - 1);
-	   
+
 	    for (i = 0; i < el->len; i++) {
 		ret = _asn1_encode(t->ptr, p, len,
 				   elptr,
@@ -614,20 +617,20 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	case A1_OP_BMEMBER: {
 	    const struct asn1_template *bmember = t->ptr;
 	    size_t size = bmember->offset;
-	    size_t elements = A1_HEADER_LEN(bmember);
+	    size_t els = A1_HEADER_LEN(bmember);
 	    size_t pos;
 	    unsigned char c = 0;
 	    unsigned int bitset = 0;
 	    int rfc1510 = (bmember->tt & A1_HBF_RFC1510);
 
-	    bmember += elements;
+	    bmember += els;
 
 	    if (rfc1510)
 		pos = 31;
 	    else
 		pos = bmember->offset;
 
-	    while (elements && len) {
+	    while (els && len) {
 		while (bmember->offset / 8 < pos / 8) {
 		    if (rfc1510 || bitset || c) {
 			if (len < 1)
@@ -638,14 +641,14 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		    pos -= 8;
 		}
 		bmember_put_bit(&c, data, bmember->offset, size, &bitset);
-		elements--; bmember--;
+		els--; bmember--;
 	    }
 	    if (rfc1510 || bitset) {
 		if (len < 1)
 		    return ASN1_OVERFLOW;
 		*p-- = c; len--;
 	    }
-	   
+
 	    if (len < 1)
 		return ASN1_OVERFLOW;
 	    if (rfc1510 || bitset == 0)
@@ -677,7 +680,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		ret = _asn1_encode(choice->ptr, p, len, el, &datalen);
 		if (ret)
 		    return ret;
-	    }	   
+	    }
 	    len -= datalen; p -= datalen;
 
 	    break;
@@ -688,8 +691,8 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	t--;
 	elements--;
     }
-    if (size)
-	*size = oldlen - len;
+    if (retsize)
+	*retsize = oldlen - len;
 
     return 0;
 }
@@ -771,7 +774,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
 	case A1_OP_BMEMBER: {
 	    const struct asn1_template *bmember = t->ptr;
 	    size_t size = bmember->offset;
-	    size_t elements = A1_HEADER_LEN(bmember);
+	    size_t els = A1_HEADER_LEN(bmember);
 	    int rfc1510 = (bmember->tt & A1_HBF_RFC1510);
 
 	    if (rfc1510) {
@@ -780,14 +783,14 @@ _asn1_length(const struct asn1_template *t, const void *data)
 
 		ret += 1;
 
-		bmember += elements;
+		bmember += els;
 
-		while (elements) {
+		while (els) {
 		    if (bmember_isset_bit(data, bmember->offset, size)) {
 			ret += (bmember->offset / 8) + 1;
 			break;
 		    }
-		    elements--; bmember--;
+		    els--; bmember--;
 		}
 	    }
 	    break;
@@ -1063,7 +1066,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    const struct asn1_template *choice = t->ptr;
 	    const unsigned int *felement = DPOC(from, choice->offset);
 	    unsigned int *telement = DPO(to, choice->offset);
-	   
+
 	    if (*felement > A1_HEADER_LEN(choice))
 		return ASN1_PARSE_ERROR;
 

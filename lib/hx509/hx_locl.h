@@ -78,11 +78,12 @@ struct hx509_collector;
 struct hx509_generate_private_context;
 typedef struct hx509_path hx509_path;
 
+#include <heimbase.h>
+
 #include <hx509.h>
 
 typedef void (*_hx509_cert_release_func)(struct hx509_cert_data *, void *);
 
-typedef struct hx509_private_key_ops hx509_private_key_ops;
 
 #include "sel.h"
 
@@ -187,7 +188,7 @@ struct hx509_context_data {
 #define HX509_CTX_VERIFY_MISSING_OK	1
     int ocsp_time_diff;
 #define HX509_DEFAULT_OCSP_TIME_DIFF	(5*60)
-    hx509_error error;
+    heim_error_t error;
     struct et_list *et_list;
     char *querystat;
     hx509_certs default_trust_anchors;

@@ -10,6 +10,7 @@ dir_dce = dceutils
 endif
 SUBDIRS = 					\
 	  afsutil				\
+	  dbutils				\
 	  ftp					\
 	  login					\
 	  $(dir_otp)				\
@@ -25,3 +26,5 @@ SUBDIRS = 					\
 	  kx					\
 	  kf					\
 	  $(dir_dce)
+
+EXTRA_DIST = NTMakefile

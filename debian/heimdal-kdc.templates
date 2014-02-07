@@ -1,12 +1,3 @@
-# These templates have been reviewed by the debian-l10n-english
-# team
-#
-# If modifications/additions/rewording are needed, please ask
-# debian-l10n-english@lists.debian.org for advice.
-#
-# Even minor modifications require translation updates and such
-# changes should be coordinated with translators and reviewers.
-
 Template: heimdal/realm
 Type: string
 _Description: Local realm name:

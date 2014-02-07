@@ -193,12 +193,12 @@ kadm5_log_flush (kadm5_log_context *log_context,
 {
     krb5_data data;
     size_t len;
-    int ret;
+    ssize_t ret;
 
     krb5_storage_to_data(sp, &data);
     len = data.length;
     ret = write (log_context->log_fd, data.data, len);
-    if (ret != len) {
+    if (ret < 0 || (size_t)ret != len) {
 	krb5_data_free(&data);
 	return errno;
     }
@@ -583,9 +583,10 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	return ret;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_fetch(context->context, context->db,
-				 log_ent.entry.principal,
-				 HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
+    ret = context->db->hdb_fetch_kvno(context->context, context->db,
+				      log_ent.entry.principal,
+				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
+				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (ret)
 	goto out;
     if (mask & KADM5_PRINC_EXPIRE_TIME) {
@@ -696,7 +697,16 @@ kadm5_log_replay_modify (kadm5_server_context *context,
     }
     if (mask & KADM5_KEY_DATA) {
 	size_t num;
-	int i;
+	size_t i;
+
+	/*
+	 * We don't need to do anything about key history here because
+	 * the log entry contains a complete entry, including hdb
+	 * extensions.  We do need to make sure that KADM5_TL_DATA is in
+	 * the mask though, since that's what it takes to update the
+	 * extensions (see below).
+	 */
+	mask |= KADM5_TL_DATA;
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);
@@ -880,11 +890,14 @@ kadm5_log_previous (krb5_context context,
     ret = krb5_ret_int32 (sp, &tmp);
     if (ret)
 	goto end_of_storage;
-    if (tmp != *ver) {
+    if ((uint32_t)tmp != *ver) {
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "
-			       "have consistency failure, version number wrong");
+			       "have consistency failure, version number wrong "
+			       "(tmp %lu ver %lu)",
+			       (unsigned long)tmp,
+			       (unsigned long)*ver);
 	return KADM5_BAD_DB;
     }
     ret = krb5_ret_int32 (sp, &tmp);
@@ -898,7 +911,7 @@ kadm5_log_previous (krb5_context context,
     ret = krb5_ret_int32 (sp, &tmp);
     if (ret)
 	goto end_of_storage;
-    if (tmp != *len) {
+    if ((uint32_t)tmp != *len) {
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "
@@ -988,9 +1001,13 @@ static HEIMDAL_MUTEX signal_mutex = HEIMDAL_MUTEX_INITIALIZER;
 const char *
 kadm5_log_signal_socket(krb5_context context)
 {
+    int ret = 0;
+
     HEIMDAL_MUTEX_lock(&signal_mutex);
     if (!default_signal)
-	asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+	ret = asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+    if (ret == -1)
+	default_signal = NULL;
     HEIMDAL_MUTEX_unlock(&signal_mutex);
 
     return krb5_config_get_string_default(context,

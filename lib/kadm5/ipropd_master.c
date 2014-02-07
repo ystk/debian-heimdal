@@ -141,9 +141,11 @@ check_acl (krb5_context context, const char *name)
     FILE *fp;
     char buf[256];
     int ret = 1;
-    char *slavefile;
+    char *slavefile = NULL;
 
-    asprintf(&slavefile, "%s/slaves", hdb_db_dir(context));
+    if (asprintf(&slavefile, "%s/slaves", hdb_db_dir(context)) == -1
+	|| slavefile == NULL)
+	errx(1, "out of memory");
 
     fn = krb5_config_get_string_default(context,
 					NULL,
@@ -308,11 +310,6 @@ error:
     remove_slave(context, s, root);
 }
 
-struct prop_context {
-    krb5_auth_context auth_context;
-    krb5_socket_t fd;
-};
-
 static int
 prop_one (krb5_context context, HDB *db, hdb_entry_ex *entry, void *v)
 {
@@ -462,9 +459,19 @@ send_diffs (krb5_context context, slave *s, int log_fd,
     int ret = 0;
 
     if (s->version == current_version) {
+	char buf[4];
+
+	sp = krb5_storage_from_mem(buf, 4);
+	if (sp == NULL)
+	    krb5_errx(context, 1, "krb5_storage_from_mem");
+	krb5_store_int32(sp, YOU_HAVE_LAST_VERSION);
+	krb5_storage_free(sp);
+	data.data   = buf;
+	data.length = 4;
+	ret = krb5_write_priv_message(context, s->ac, &s->fd, &data);
 	krb5_warnx(context, "slave %s in sync already at version %ld",
 		   s->name, (long)s->version);
-	return 0;
+	return ret;
     }
 
     if (s->flags & SLAVE_F_DEAD)
@@ -573,13 +580,15 @@ process_msg (krb5_context context, slave *s, int log_fd,
 	}
 	/* new started slave that have old log */
 	if (s->version == 0 && tmp != 0) {
-	    if (current_version < tmp) {
-		krb5_warnx (context, "Slave %s have later version the master "
-			    "OUT OF SYNC", s->name);
+	    if (current_version < (uint32_t)tmp) {
+		krb5_warnx (context, "Slave %s (version %lu) have later version "
+			    "the master (version %lu) OUT OF SYNC",
+			    s->name, (unsigned long)tmp,
+			    (unsigned long)current_version);
 	    }
 	    s->version = tmp;
 	}
-	if (tmp < s->version) {
+	if ((uint32_t)tmp < s->version) {
 	    krb5_warnx (context, "Slave claims to not have "
 			"version we already sent to it");
 	} else {
@@ -614,24 +623,25 @@ open_stats(krb5_context context)
 {
     char *statfile = NULL;
     const char *fn;
-    FILE *f;
+    int ret;
 
     if (slave_stats_file)
 	fn = slave_stats_file;
     else {
-	asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context));
+	ret = asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context));
+	if (ret == -1)
+	    return NULL;
 	fn = krb5_config_get_string_default(context,
 					    NULL,
 					    statfile,
 					    "kdc",
 					    "iprop-stats",
 					    NULL);
-    }
-    f = fopen(fn, "w");
-    if (statfile)
 	free(statfile);
-
-    return f;
+    }
+    if (fn == NULL)
+	return NULL;
+    return fopen(fn, "w");
 }
 
 static void
@@ -694,7 +704,7 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
 	    rtbl_add_column_entry(tbl, SLAVE_ADDRESS, str);
 	} else
 	    rtbl_add_column_entry(tbl, SLAVE_ADDRESS, "<unknown>");
-	
+
 	snprintf(str, sizeof(str), "%u", (unsigned)slaves->version);
 	rtbl_add_column_entry(tbl, SLAVE_VERSION, str);
 
@@ -716,10 +726,11 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
 }
 
 
+static char sHDB[] = "HDB:";
 static char *realm;
 static int version_flag;
 static int help_flag;
-static char *keytab_str = "HDB:";
+static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
 static char *port_str;
@@ -728,27 +739,27 @@ static int detach_from_console = 0;
 #endif
 
 static struct getargs args[] = {
-    { "config-file", 'c', arg_string, &config_file },
-    { "realm", 'r', arg_string, &realm },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
+    { "realm", 'r', arg_string, &realm, NULL, NULL },
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication from", "kspec" },
     { "database", 'd', arg_string, &database, "database", "file"},
-    { "slave-stats-file", 0, arg_string, &slave_stats_file,
+    { "slave-stats-file", 0, arg_string, rk_UNCONST(&slave_stats_file),
       "file for slave status information", "file"},
-    { "time-missing", 0, arg_string, &slave_time_missing,
+    { "time-missing", 0, arg_string, rk_UNCONST(&slave_time_missing),
       "time before slave is polled for presence", "time"},
-    { "time-gone", 0, arg_string, &slave_time_gone,
+    { "time-gone", 0, arg_string, rk_UNCONST(&slave_time_gone),
       "time of inactivity after which a slave is considered gone", "time"},
     { "port", 0, arg_string, &port_str,
       "port ipropd will listen to", "port"},
 #ifdef SUPPORT_DETACH
     { "detach", 0, arg_flag, &detach_from_console,
-      "detach from console" },
+      "detach from console", NULL },
 #endif
-    { "hostname", 0, arg_string, &master_hostname,
+    { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 static int num_args = sizeof(args) / sizeof(args[0]);
 
@@ -765,10 +776,10 @@ main(int argc, char **argv)
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;
     krb5_keytab keytab;
-    int optidx;
     char **files;
+    int aret;
 
-    optidx = krb5_program_setup(&context, argc, argv, args, num_args, NULL);
+    (void) krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
     if(help_flag)
 	krb5_std_usage(0, args, num_args);
@@ -780,8 +791,8 @@ main(int argc, char **argv)
     setup_signal();
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	if (aret == -1 || config_file == NULL)
 	    errx(1, "out of memory");
     }
 
@@ -802,8 +813,13 @@ main(int argc, char **argv)
 	krb5_errx (context, 1, "couldn't parse time: %s", slave_time_missing);
 
 #ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
+    if (detach_from_console) {
+	aret = daemon(0, 0);
+	if (aret == -1) {
+	    /* not much to do if detaching fails... */
+	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
+	}
+    }
 #endif
     pidfile (NULL);
     krb5_openlog (context, "ipropd-master", &log_facility);

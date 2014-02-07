@@ -52,14 +52,18 @@ integer_symbol(const char *basename, const Type *t)
 	return "int"; /* XXX enum foo */
     else if (t->range == NULL)
 	return "heim_integer";
-    else if (t->range->min == INT_MIN && t->range->max == INT_MAX)
+    else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+	return "int64_t";
+    else if (t->range->min >= 0 && t->range->max > UINT_MAX)
+	return "uint64_t";
+    else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
 	return "int";
-    else if (t->range->min == 0 && t->range->max == UINT_MAX)
+    else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
 	return "unsigned";
-    else if (t->range->min == 0 && t->range->max == INT_MAX)
-	return "unsigned";
-    else
+    else {
 	abort();
+        UNREACHABLE(return NULL);
+    }
 }
 
 static const char *
@@ -340,7 +344,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 
     ret = strcmp(tl->header, ql->header);
     if (ret) return ret;
-	
+
     q = ASN1_TAILQ_FIRST(&ql->template);
     ASN1_TAILQ_FOREACH(t, &tl->template, members) {
 	if (q == NULL) return 1;
@@ -351,7 +355,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 	} else {
 	    ret = strcmp(t->tt, q->tt);
 	    if (ret) return ret;
-	    
+
 	    ret = strcmp(t->offset, q->offset);
 	    if (ret) return ret;
 
@@ -477,27 +481,29 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 		     optional ? "|A1_FLAG_OPTIONAL" : "",
 		     poffset, t->symbol->gen_name);
 	} else {
-	    add_line_pointer(temp, t->symbol->gen_name, poffset, 
+	    add_line_pointer(temp, t->symbol->gen_name, poffset,
 			     "A1_OP_TYPE %s", optional ? "|A1_FLAG_OPTIONAL" : "");
 	}
 	break;
     case TInteger: {
-	char *itype;
+	char *itype = NULL;
 
 	if (t->members)
 	    itype = "IMEMBER";
 	else if (t->range == NULL)
 	    itype = "HEIM_INTEGER";
-	else if (t->range->min == INT_MIN && t->range->max == INT_MAX)
+	else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+	    itype = "INTEGER64";
+	else if (t->range->min >= 0 && t->range->max > UINT_MAX)
+	    itype = "UNSIGNED64";
+	else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
 	    itype = "INTEGER";
-	else if (t->range->min == 0 && t->range->max == UINT_MAX)
-	    itype = "UNSIGNED";
-	else if (t->range->min == 0 && t->range->max == INT_MAX)
+	else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
 	    itype = "UNSIGNED";
 	else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
-	   
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
+
 	add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, NULL }", itype, poffset);
 	break;
     }
@@ -555,7 +561,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    break;
 	}
 
-	if (asprintf(&bname, "bmember_%s_%lu", name ? name : "", (unsigned long)t) < 0 || bname == NULL)
+	if (asprintf(&bname, "bmember_%s_%p", name ? name : "", t) < 0 || bname == NULL)
 	    errx(1, "malloc");
 	output_name(bname);
 
@@ -589,7 +595,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
-	    
+
 	    if (m->ellipsis)
 		continue;
 
@@ -618,7 +624,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else
 	    sename = symbol_name(basetype, t->subtype);
 
-	if (asprintf(&tname, "tag_%s_%lu", name ? name : "", (unsigned long)t) < 0 || tname == NULL)
+	if (asprintf(&tname, "tag_%s_%p", name ? name : "", t) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	output_name(tname);
 
@@ -642,7 +648,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
     }
     case TSetOf:
     case TSequenceOf: {
-	const char *type, *tname, *dupname;
+	const char *type = NULL, *tname, *dupname;
 	char *sename = NULL, *elname = NULL;
 	int subtype_is_struct = is_struct(t->subtype, 0);
 
@@ -668,7 +674,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else if (t->type == TSequenceOf) type = "A1_OP_SEQOF";
 	else abort();
 
-	if (asprintf(&elname, "%s_%s_%lu", basetype, tname, (unsigned long)t) < 0 || elname == NULL)
+	if (asprintf(&elname, "%s_%s_%p", basetype, tname, t) < 0 || elname == NULL)
 	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, NULL, t->subtype,
@@ -697,7 +703,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    char *elname = NULL;
 	    char *newbasename = NULL;
 	    int subtype_is_struct;
-	    
+
 	    if (m->ellipsis) {
 		ellipsis = 1;
 		continue;
@@ -801,7 +807,7 @@ generate_template_type(const char *varname,
 		       int optional, int isstruct, int need_offset)
 {
     struct tlist *tl;
-    const char *dup;
+    const char *d;
     int have_ellipsis = 0;
 
     tl = tlist_new(varname);
@@ -825,11 +831,11 @@ generate_template_type(const char *varname,
 		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "",
 		 isstruct ? "struct " : "", basetype, tlist_count(tl));
 
-    dup = tlist_find_dup(tl);
-    if (dup) {
-	if (strcmp(dup, tl->name) == 0)
+    d = tlist_find_dup(tl);
+    if (d) {
+	if (strcmp(d, tl->name) == 0)
 	    errx(1, "found dup of ourself");
-	*dupname = dup;
+	*dupname = d;
     } else {
 	*dupname = tl->name;
 	tlist_print(tl);

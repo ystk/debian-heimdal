@@ -52,26 +52,9 @@ fi
 # if already configured - dont reconfigure
 if [ ! -f /etc/heimdal-kdc/.configured ]
 then
-        # get default realm
-        # should use krb5-config setting???
-        if db_get krb5-config/default_realm && [ "x$RET" != "x" ]
-        then
-                default_realm="$RET"
-        else
-                default_realm="`hostname -d | tr a-z A-Z`"
-        fi
-        db_fget heimdal/realm seen
-        if [ "$RET" != "true" ]; then
-                db_set heimdal/realm "$default_realm"
-        fi
-        db_subst heimdal/realm default_realm "$default_realm"
-        db_input medium heimdal/realm || true
-        db_go
         db_get heimdal/realm; REALM="$RET"
 
         # get password
-        db_input medium heimdal-kdc/password || true
-        db_go
         db_get heimdal-kdc/password; PASSWORD="$RET"
         db_set heimdal-kdc/password ""
 
@@ -114,5 +97,4 @@ configure)
         ;;
 esac
 
-db_stop
 #DEBHELPER#

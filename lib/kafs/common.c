@@ -139,35 +139,6 @@ _kafs_fixup_viceid(struct ClearToken *ct, uid_t uid)
     }
 }
 
-
-int
-_kafs_v4_to_kt(CREDENTIALS *c, uid_t uid, struct kafs_token *kt)
-{
-    kt->ticket = NULL;
-
-    if (c->ticket_st.length > MAX_KTXT_LEN)
-	return EINVAL;
-
-    kt->ticket = malloc(c->ticket_st.length);
-    if (kt->ticket == NULL)
-	return ENOMEM;
-    kt->ticket_len = c->ticket_st.length;
-    memcpy(kt->ticket, c->ticket_st.dat, kt->ticket_len);
-
-    /*
-     * Build a struct ClearToken
-     */
-    kt->ct.AuthHandle = c->kvno;
-    memcpy (kt->ct.HandShakeKey, c->session, sizeof(c->session));
-    kt->ct.ViceId = uid;
-    kt->ct.BeginTimestamp = c->issue_date;
-    kt->ct.EndTimestamp = krb_life_to_time(c->issue_date, c->lifetime);
-
-    _kafs_fixup_viceid(&kt->ct, uid);
-
-    return 0;
-}
-
 /* Try to get a db-server for an AFS cell from a AFSDB record */
 
 static int
@@ -378,13 +349,19 @@ _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
     if (kafs_verbose) {
 	const char *estr = (*data->get_error)(data, ret);
 	char *str;
-	asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
-		 data->name, cell ? "/" : "",
-		 cell ? cell : "", realm, estr ? estr : "unknown", ret);
-	(*kafs_verbose)(kafs_verbose_ctx, str);
+	int aret;
+
+	aret = asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
+			data->name, cell ? "/" : "",
+			cell ? cell : "", realm, estr ? estr : "unknown", ret);
+	if (aret != -1) {
+	    (*kafs_verbose)(kafs_verbose_ctx, str);
+	    free(str);
+	} else {
+	    (*kafs_verbose)(kafs_verbose_ctx, "out of memory");
+	}
 	if (estr)
 	    (*data->free_error)(data, estr);
-	free(str);
     }
 
     return ret;

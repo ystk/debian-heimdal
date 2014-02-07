@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_hcrypto)
 
+WFLAGS += $(WFLAGS_LITE)
+
 noinst_LIBRARIES = libtelnet.a
 
 libtelnet_a_SOURCES = \
@@ -20,4 +22,4 @@ libtelnet_a_SOURCES = \
 	misc.c		\
 	misc.h
 
-EXTRA_DIST = rsaencpwd.c spx.c
+EXTRA_DIST = NTMakefile rsaencpwd.c spx.c

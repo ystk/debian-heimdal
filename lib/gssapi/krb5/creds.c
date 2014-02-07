@@ -33,7 +33,7 @@
 
 #include "gsskrb5_locl.h"
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_export_cred(OM_uint32 *minor_status,
 		     gss_cred_id_t cred_handle,
 		     gss_buffer_t cred_token)
@@ -47,7 +47,7 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
     char *str;
 
     GSSAPI_KRB5_INIT (&context);
-    
+
     if (handle->usage != GSS_C_INITIATE && handle->usage != GSS_C_BOTH) {
 	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
 	return GSS_S_FAILURE;
@@ -93,14 +93,14 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = krb5_cc_get_full_name(context, handle->ccache, &str);
 	if (ret) {
 	    krb5_storage_free(sp);
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = krb5_store_string(sp, str);
 	free(str);
 	if (ret) {
@@ -154,7 +154,7 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
     return GSS_S_COMPLETE;
 }
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_import_cred(OM_uint32 * minor_status,
 		     gss_buffer_t cred_token,
 		     gss_cred_id_t * cred_handle)
@@ -222,7 +222,7 @@ _gsskrb5_import_cred(OM_uint32 * minor_status,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = krb5_cc_resolve(context, str, &id);
 	krb5_xfree(str);
 	if (ret) {

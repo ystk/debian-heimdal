@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <dh.h>
 
 #include <roken.h>
+
+#ifdef USE_HCRYPTO_TFM
 
 #include "tfm.h"
 
@@ -112,11 +112,11 @@ tfm_dh_generate_key(DH *dh)
 	    BN_free(dh->pub_key);
 
 	fp_init_multi(&pub, &priv_key, &g, &p, NULL);
-	
+
 	BN2mpz(&priv_key, dh->priv_key);
 	BN2mpz(&g, dh->g);
 	BN2mpz(&p, dh->p);
-	
+
 	res = fp_exptmod(&g, &priv_key, &p, &pub);
 
 	fp_zero(&priv_key);
@@ -129,7 +129,7 @@ tfm_dh_generate_key(DH *dh)
 	fp_zero(&pub);
 	if (dh->pub_key == NULL)
 	    return 0;
-	
+
 	if (DH_check_pubkey(dh, dh->pub_key, &codes) && codes == 0)
 	    break;
 	if (have_private_key)
@@ -235,9 +235,9 @@ const DH_METHOD _hc_dh_tfm_method = {
 };
 
 /**
- * DH implementation using libimath.
+ * DH implementation using tfm.
  *
- * @return the DH_METHOD for the DH implementation using libimath.
+ * @return the DH_METHOD for the DH implementation using tfm.
  *
  * @ingroup hcrypto_dh
  */
@@ -247,3 +247,5 @@ DH_tfm_method(void)
 {
     return &_hc_dh_tfm_method;
 }
+
+#endif

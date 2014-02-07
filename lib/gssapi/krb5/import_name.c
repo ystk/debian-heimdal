@@ -107,9 +107,9 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
 	    return GSS_S_BAD_NAME;
 	else if (p->name.name_string.len > 1)
 	    hostname = p->name.name_string.val[1];
-	
+
 	service = p->name.name_string.val[0];
-	
+
 	ret = krb5_sname_to_principal(context,
 				      hostname,
 				      service,
@@ -215,7 +215,7 @@ import_export_name (OM_uint32 *minor_status,
     return ret;
 }
 
-OM_uint32 _gsskrb5_import_name
+OM_uint32 GSSAPI_CALLCONV _gsskrb5_import_name
            (OM_uint32 * minor_status,
             const gss_buffer_t input_name_buffer,
             const gss_OID input_name_type,

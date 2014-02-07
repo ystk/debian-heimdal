@@ -48,7 +48,7 @@ struct limit {
     int has_limit;
     struct rlimit limit;
 } limits[] = {
-#define LIM(X, S) { #X, RLIMIT_##X, S, 0 }
+#define LIM(X, S) { #X, RLIMIT_##X, S, 0, {0, 0} }
     LIM(CORE, 1024),
     LIM(CPU, 60),
     LIM(DATA, 1024),
@@ -75,7 +75,7 @@ struct limit {
       maxlogins
       priority
     */
-    { NULL, 0 }
+    { NULL, 0, 0, 0, {0, 0}  }
 };
 
 static struct limit *
@@ -192,7 +192,7 @@ read_limits_conf(const char *file, const struct passwd *pwd)
 		continue;
 	    l->has_limit = level;
 	}
-	
+
 	/* XXX unclear: if you soft to more than default hard, should
            we set hard to soft? this code doesn't. */
 	if(strcasecmp(args[1], "soft") == 0 || strcmp(args[1], "-") == 0)

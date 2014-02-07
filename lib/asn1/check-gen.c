@@ -98,18 +98,21 @@ test_principal (void)
     struct test_case tests[] = {
 	{ NULL, 29,
 	  "\x30\x1b\xa0\x10\x30\x0e\xa0\x03\x02\x01\x01\xa1\x07\x30\x05\x1b"
-	  "\x03\x6c\x68\x61\xa1\x07\x1b\x05\x53\x55\x2e\x53\x45"
+	  "\x03\x6c\x68\x61\xa1\x07\x1b\x05\x53\x55\x2e\x53\x45",
+	  NULL
 	},
 	{ NULL, 35,
 	  "\x30\x21\xa0\x16\x30\x14\xa0\x03\x02\x01\x01\xa1\x0d\x30\x0b\x1b"
 	  "\x03\x6c\x68\x61\x1b\x04\x72\x6f\x6f\x74\xa1\x07\x1b\x05\x53\x55"
-	  "\x2e\x53\x45"
+	  "\x2e\x53\x45",
+	  NULL
 	},
 	{ NULL, 54,
 	  "\x30\x34\xa0\x26\x30\x24\xa0\x03\x02\x01\x03\xa1\x1d\x30\x1b\x1b"
 	  "\x04\x68\x6f\x73\x74\x1b\x13\x6e\x75\x74\x63\x72\x61\x63\x6b\x65"
 	  "\x72\x2e\x65\x2e\x6b\x74\x68\x2e\x73\x65\xa1\x0a\x1b\x08\x45\x2e"
-	  "\x4b\x54\x48\x2e\x53\x45"
+	  "\x4b\x54\x48\x2e\x53\x45",
+	  NULL
 	}
     };
 
@@ -171,7 +174,8 @@ test_authenticator (void)
 	  "\x45\x2e\x4b\x54\x48\x2e\x53\x45\xa2\x10\x30\x0e\xa0"
 	  "\x03\x02\x01\x01\xa1\x07\x30\x05\x1b\x03\x6c\x68\x61"
 	  "\xa4\x03\x02\x01\x0a\xa5\x11\x18\x0f\x31\x39\x37\x30"
-	  "\x30\x31\x30\x31\x30\x30\x30\x31\x33\x39\x5a"
+	  "\x30\x31\x30\x31\x30\x30\x30\x31\x33\x39\x5a",
+	  NULL
 	},
 	{ NULL, 67,
 	  "\x62\x41\x30\x3f\xa0\x03\x02\x01\x05\xa1\x07\x1b\x05"
@@ -179,7 +183,8 @@ test_authenticator (void)
 	  "\x01\xa1\x0d\x30\x0b\x1b\x03\x6c\x68\x61\x1b\x04\x72"
 	  "\x6f\x6f\x74\xa4\x04\x02\x02\x01\x24\xa5\x11\x18\x0f"
 	  "\x31\x39\x37\x30\x30\x31\x30\x31\x30\x30\x31\x36\x33"
-	  "\x39\x5a"
+	  "\x39\x5a",
+	  NULL
 	}
     };
 
@@ -352,12 +357,14 @@ test_Name (void)
     atv1[0].type.length = sizeof(cmp_CN)/sizeof(cmp_CN[0]);
     atv1[0].type.components = cmp_CN;
     atv1[0].value.element = choice_DirectoryString_printableString;
-    atv1[0].value.u.printableString = "Love";
+    atv1[0].value.u.printableString.data = "Love";
+    atv1[0].value.u.printableString.length = 4;
 
     atv1[1].type.length = sizeof(cmp_L)/sizeof(cmp_L[0]);
     atv1[1].type.components = cmp_L;
     atv1[1].value.element = choice_DirectoryString_printableString;
-    atv1[1].value.u.printableString = "STOCKHOLM";
+    atv1[1].value.u.printableString.data = "STOCKHOLM";
+    atv1[1].value.u.printableString.length = 9;
 
     /* n2 */
     n2.element = choice_Name_rdnSequence;
@@ -369,12 +376,14 @@ test_Name (void)
     atv2[0].type.length = sizeof(cmp_L)/sizeof(cmp_L[0]);
     atv2[0].type.components = cmp_L;
     atv2[0].value.element = choice_DirectoryString_printableString;
-    atv2[0].value.u.printableString = "STOCKHOLM";
+    atv2[0].value.u.printableString.data = "STOCKHOLM";
+    atv2[0].value.u.printableString.length = 9;
 
     atv2[1].type.length = sizeof(cmp_CN)/sizeof(cmp_CN[0]);
     atv2[1].type.components = cmp_CN;
     atv2[1].value.element = choice_DirectoryString_printableString;
-    atv2[1].value.u.printableString = "Love";
+    atv2[1].value.u.printableString.data = "Love";
+    atv2[1].value.u.printableString.length = 4;
 
     /* */
     tests[0].val = &n1;
@@ -528,7 +537,7 @@ test_time (void)
 	  "time 1" },
 	{ NULL,  17,
 	  "\x18\x0f\x32\x30\x30\x39\x30\x35\x32\x34\x30\x32\x30\x32\x34\x30"
-	  "\x5a"
+	  "\x5a",
 	  "time 2" }
     };
 
@@ -752,6 +761,132 @@ check_tag_length(void)
 	    }
 	    if (values[i] != u) {
 		printf("wrong value for tag test %d\n", i);
+		failed = 1;
+	    }
+	}
+	map_free(page, "test", "decode");
+    }
+    return failed;
+}
+
+static int
+check_tag_length64(void)
+{
+    struct test_data td[] = {
+	{ 1, 3, 3, "\x02\x01\x00"},
+	{ 1, 7, 7, "\x02\x05\x01\xff\xff\xff\xff"},
+	{ 1, 7, 7, "\x02\x05\x02\x00\x00\x00\x00"},
+	{ 1, 9, 9, "\x02\x07\x7f\xff\xff\xff\xff\xff\xff"},
+	{ 1, 10, 10, "\x02\x08\x00\x80\x00\x00\x00\x00\x00\x00"},
+	{ 1, 10, 10, "\x02\x08\x7f\xff\xff\xff\xff\xff\xff\xff"},
+	{ 1, 11, 11, "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"},
+	{ 0, 3, 0, "\x02\x02\x00"},
+	{ 0, 3, 0, "\x02\x7f\x7f"},
+	{ 0, 4, 0, "\x02\x03\x00\x80"},
+	{ 0, 4, 0, "\x02\x7f\x01\x00"},
+	{ 0, 5, 0, "\x02\xff\x7f\x02\x00"}
+    };
+    size_t sz;
+    TESTuint64 values[] = {0, 8589934591LL, 8589934592LL,
+			   36028797018963967LL, 36028797018963968LL,
+			   9223372036854775807LL, 18446744073709551615ULL,
+			   0, 127, 128, 256, 512 };
+    TESTuint64 u;
+    int i, ret, failed = 0;
+    void *buf;
+
+    if (sizeof(TESTuint64) != sizeof(uint64_t)) {
+	ret += 1;
+	printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
+	       (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
+    }
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++) {
+	struct map_page *page;
+
+	buf = map_alloc(OVERRUN, td[i].data, td[i].len, &page);
+
+	ret = decode_TESTuint64(buf, td[i].len, &u, &sz);
+	if (ret) {
+	    if (td[i].ok) {
+		printf("failed with tag len test %d\n", i);
+		printf("ret = %d\n", ret);
+		failed = 1;
+	    }
+	} else {
+	    if (td[i].ok == 0) {
+		printf("failed with success for tag len test %d\n", i);
+		failed = 1;
+	    }
+	    if (td[i].expected_len != sz) {
+		printf("wrong expected size for tag test %d\n", i);
+		printf("sz = %lu\n", (unsigned long)sz);
+		failed = 1;
+	    }
+	    if (values[i] != u) {
+		printf("wrong value for tag test %d\n", i);
+		printf("Expected value: %llu\nActual value: %llu\n",
+		       (unsigned long long)values[i], (unsigned long long)u);
+		failed = 1;
+	    }
+	}
+	map_free(page, "test", "decode");
+    }
+    return failed;
+}
+
+static int
+check_tag_length64s(void)
+{
+    struct test_data td[] = {
+	{ 1, 3, 3, "\x02\x01\x00"},
+	{ 1, 7, 7, "\x02\x05\xfe\x00\x00\x00\x01"},
+	{ 1, 7, 7, "\x02\x05\xfe\x00\x00\x00\x00"},
+	{ 1, 9, 9, "\x02\x07\x80\x00\x00\x00\x00\x00\x01"},
+	{ 1, 9, 9, "\x02\x07\x80\x00\x00\x00\x00\x00\x00"},
+	{ 1, 10, 10, "\x02\x08\x80\x00\x00\x00\x00\x00\x00\x01"},
+	{ 1, 9, 9, "\x02\x07\x80\x00\x00\x00\x00\x00\x01"},
+	{ 0, 3, 0, "\x02\x02\x00"},
+	{ 0, 3, 0, "\x02\x7f\x7f"},
+	{ 0, 4, 0, "\x02\x03\x00\x80"},
+	{ 0, 4, 0, "\x02\x7f\x01\x00"},
+	{ 0, 5, 0, "\x02\xff\x7f\x02\x00"}
+    };
+    size_t sz;
+    TESTint64 values[] = {0, -8589934591LL, -8589934592LL,
+			   -36028797018963967LL, -36028797018963968LL,
+			   -9223372036854775807LL, -36028797018963967LL,
+			   0, 127, 128, 256, 512 };
+    TESTint64 u;
+    int i, ret, failed = 0;
+    void *buf;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++) {
+	struct map_page *page;
+
+	buf = map_alloc(OVERRUN, td[i].data, td[i].len, &page);
+
+	ret = decode_TESTint64(buf, td[i].len, &u, &sz);
+	if (ret) {
+	    if (td[i].ok) {
+		printf("failed with tag len test %d\n", i);
+		printf("ret = %d\n", ret);
+		failed = 1;
+	    }
+	} else {
+	    if (td[i].ok == 0) {
+		printf("failed with success for tag len test %d\n", i);
+		failed = 1;
+	    }
+	    if (td[i].expected_len != sz) {
+		printf("wrong expected size for tag test %d\n", i);
+		printf("sz = %lu\n", (unsigned long)sz);
+		failed = 1;
+	    }
+	    if (values[i] != u) {
+		printf("wrong value for tag test %d\n", i);
+		printf("Expected value: %lld\nActual value: %lld\n",
+		       (long long)values[i], (long long)u);
 		failed = 1;
 	    }
 	}
@@ -1055,7 +1190,7 @@ check_fail_largetag(void)
 	{NULL, 0, "", "empty buffer"},
 	{NULL, 7, "\x30\x05\xa1\x03\x02\x02\x01",
 	 "one too short" },
-	{NULL, 7, "\x30\x04\xa1\x03\x02\x02\x01"
+	{NULL, 7, "\x30\x04\xa1\x03\x02\x02\x01",
 	 "two too short" },
 	{NULL, 7, "\x30\x03\xa1\x03\x02\x02\x01",
 	 "three too short" },
@@ -1090,7 +1225,7 @@ check_fail_sequence(void)
 	{NULL, 0, "", "empty buffer"},
 	{NULL, 24,
 	 "\x30\x16\xa0\x03\x02\x01\x01\xa1\x08\x30\x06\xbf\x7f\x03\x02\x01\x01"
-	 "\x02\x01\x01\xa2\x03\x02\x01\x01"
+	 "\x02\x01\x01\xa2\x03\x02\x01\x01",
 	 "missing one byte from the end, internal length ok"},
 	{NULL, 25,
 	 "\x30\x18\xa0\x03\x02\x01\x01\xa1\x08\x30\x06\xbf\x7f\x03\x02\x01\x01"
@@ -1245,6 +1380,33 @@ check_seq_of_size(void)
     return 0;
 }
 
+static int
+check_TESTMechTypeList(void)
+{
+    TESTMechTypeList tl;
+    unsigned oid1[] =  { 1, 2, 840, 48018, 1, 2, 2};
+    unsigned oid2[] =  { 1, 2, 840, 113554, 1, 2, 2};
+    unsigned oid3[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 30};
+    unsigned oid4[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 10};
+    TESTMechType array[] = {{ 7, oid1 },
+                            { 7, oid2 },
+                            { 10, oid3 },
+                            { 10, oid4 }};
+    size_t size, len;
+    void *ptr;
+    int ret;
+
+    tl.len = 4;
+    tl.val = array;
+
+    ASN1_MALLOC_ENCODE(TESTMechTypeList, ptr, len, &tl, &size, ret);
+    if (ret)
+	errx(1, "TESTMechTypeList: %d", ret);
+    if (len != size)
+	abort();
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1260,6 +1422,8 @@ main(int argc, char **argv)
     ret += test_cert();
 
     ret += check_tag_length();
+    ret += check_tag_length64();
+    ret += check_tag_length64s();
     ret += test_large_tag();
     ret += test_choice();
 
@@ -1273,6 +1437,8 @@ main(int argc, char **argv)
 
     ret += check_seq();
     ret += check_seq_of_size();
+
+    ret += check_TESTMechTypeList();
 
     return ret;
 }

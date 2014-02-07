@@ -41,16 +41,17 @@
  * Kerberos mechanism.
  */
 gss_OID_desc _gss_spnego_mskrb_mechanism_oid_desc =
-	{9, (void *)"\x2a\x86\x48\x82\xf7\x12\x01\x02\x02"};
+    {9, rk_UNCONST("\x2a\x86\x48\x82\xf7\x12\x01\x02\x02")};
 
 gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
-	{9, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02"};
+    {9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")};
 
 /*
  * Allocate a SPNEGO context handle
  */
-OM_uint32 _gss_spnego_alloc_sec_context (OM_uint32 * minor_status,
-					 gss_ctx_id_t *context_handle)
+OM_uint32 GSSAPI_CALLCONV
+_gss_spnego_alloc_sec_context (OM_uint32 * minor_status,
+			       gss_ctx_id_t *context_handle)
 {
     gssspnego_ctx ctx;
 
@@ -91,7 +92,7 @@ OM_uint32 _gss_spnego_alloc_sec_context (OM_uint32 * minor_status,
  * Free a SPNEGO context handle. The caller must have acquired
  * the lock before this is called.
  */
-OM_uint32 _gss_spnego_internal_delete_sec_context
+OM_uint32 GSSAPI_CALLCONV _gss_spnego_internal_delete_sec_context
            (OM_uint32 *minor_status,
             gss_ctx_id_t *context_handle,
             gss_buffer_t output_token
@@ -150,7 +151,7 @@ OM_uint32 _gss_spnego_internal_delete_sec_context
  * a non-preferred mechanism was negotiated
  */
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_require_mechlist_mic(OM_uint32 *minor_status,
 				 gssspnego_ctx ctx,
 				 int *require_mic)
@@ -228,7 +229,7 @@ add_mech_type(gss_OID mech_type,
 }
 
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 				   gss_name_t target_name,
 				   OM_uint32 (*func)(gss_name_t, gss_OID),
@@ -240,7 +241,7 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
     gss_OID_set supported_mechs = GSS_C_NO_OID_SET;
     gss_OID first_mech = GSS_C_NO_OID;
     OM_uint32 ret;
-    int i;
+    size_t i;
 
     mechtypelist->len = 0;
     mechtypelist->val = NULL;

@@ -17,13 +17,13 @@ doing so.  It will make life easier for you and everyone else.
 * Modifying the database::
 * Checking the setup::
 * keytabs::
-* Serving Kerberos 4/524/kaserver::
 * Remote administration::
 * Password changing::
 * Testing clients and servers::
 * Slave Servers::
 * Incremental propagation::
 * Encryption types and salting::
+* Credential cache server - KCM::
 * Cross realm::
 * Transit policy::
 * Setting up DNS::
@@ -105,6 +105,14 @@ If you use a realm name equal to your domain name, you can omit the
 @samp{libdefaults}, and @samp{domain_realm}, sections. If you have a DNS
 SRV-record for your realm, or your Kerberos server has DNS CNAME
 @samp{kerberos.my.realm}, you can omit the @samp{realms} section too.
+
+@cindex KRB5_CONFIG
+If you want to use a different configuration file then the default you
+can point a file with the enviroment variable @samp{KRB5_CONFIG}.
+
+@example
+env KRB5_CONFIG=$HOME/etc/krb5.conf kinit user@@REALM
+@end example
 
 @node Creating the database, Modifying the database, Configuration file, Setting up a realm
 @section Creating the database
@@ -273,7 +281,7 @@ database check by run by the following command :
 kadmin -l check REALM.EXAMPLE.ORG
 @end example
 
-@node keytabs, Serving Kerberos 4/524/kaserver, Checking the setup, Setting up a realm
+@node keytabs, Remote administration, Checking the setup, Setting up a realm
 @section keytabs
 
 To extract a service ticket from the database and put it in a keytab, you
@@ -296,59 +304,7 @@ Version  Type             Principal
      1   des3-cbc-sha1    host/my.host.name@@MY.REALM
 @end example
 
-@node Serving Kerberos 4/524/kaserver, Remote administration, keytabs, Setting up a realm
-@section Serving Kerberos 4/524/kaserver
-
-Heimdal can be configured to support 524, Kerberos 4 or kaserver. All
-these services are turned off by default. Kerberos 4 is always
-supported by the KDC, but the Kerberos 4 client support also depends
-on Kerberos 4 support having been included at compile-time, using
-@kbd{--with-krb4=dir}.
-
-@subsection 524
-
-524 is a service that allows the KDC to convert Kerberos 5 tickets to
-Kerberos 4 tickets for backward compatibility. See also Using 2b
-tokens with AFS in @xref{AFS}.
-
-524 can be turned on by adding this to the configuration file
-
-@example
-[kdc]
-	enable-524 = yes
-@end example
-
-@subsection Kerberos 4
-
-Kerberos 4 is the predecessor to to Kerberos 5. It only supports
-single DES@. You should only enable Kerberos 4 support if you have
-needs for compatibility with an installed base of Kerberos 4
-clients/servers.
-
-Kerberos 4 can be turned on by adding this to the configuration file
-
-@example
-[kdc]
-	enable-kerberos4 = yes
-@end example
-
-@subsection kaserver
-
-Kaserver is a Kerberos 4 that is used in AFS@.  The protocol has some
-extra features over plain Kerberos 4, but like Kerberos 4, only uses
-single DES@.
-
-You should only enable Kaserver support if you have needs for
-compatibility with an installed base of AFS machines.
-
-Kaserver can be turned on by adding this to the configuration file
-
-@example
-[kdc]
-	enable-kaserver = yes
-@end example
-
-@node Remote administration, Password changing, Serving Kerberos 4/524/kaserver, Setting up a realm
+@node Remote administration, Password changing, keytabs, Setting up a realm
 @section Remote administration
 
 The administration server, @command{kadmind}, can be started by
@@ -406,7 +362,17 @@ To allow users to change their passwords, you should run @command{kpasswdd}.
 It is not run from @command{inetd}.
 
 You might need to add @samp{kpasswd} to your @file{/etc/services} as
-@samp{464/udp}.
+@samp{464/udp}.  If your realm is not setup to use DNS, you might also
+need to add a @samp{kpasswd_server} entry to the realm configuration
+in @file{/etc/krb5.conf} on client machines:
+
+@example
+[realms]
+        MY.REALM = @{
+                kdc = my.kdc my.slave.kdc
+                kpasswd_server = my.kdc
+        @}
+@end example
 
 @subsection Password quality assurance
 
@@ -630,7 +596,19 @@ slave#  /usr/heimdal/libexec/ipropd-slave master &
 To manage the iprop log file you should use the @command{iprop-log}
 command. With it you can dump, truncate and replay the logfile.
 
-@node Encryption types and salting, Cross realm, Incremental propagation, Setting up a realm
+@subsection Status of iprop master and slave
+
+Both the master and slave provides status of the world as they see it.
+
+The master write outs the current status of the slaves, last seen and
+their version number in @file{/var/heimdal/slaves-stats}.
+
+The slave write out the current status in @file{/var/heimdal/ipropd-slave-status}.
+
+These locations can be changed with command line options, and in the
+case of @command{ipropd_master}, the configuration file.
+
+@node Encryption types and salting, Credential cache server - KCM, Incremental propagation, Setting up a realm
 @section Encryption types and salting
 @cindex Salting
 @cindex Encryption types
@@ -691,7 +669,76 @@ the cell name appended to the password.
 
 @end itemize
 
-@node Cross realm, Transit policy, Encryption types and salting, Setting up a realm
+@node Credential cache server - KCM, Cross realm, Encryption types and salting, Setting up a realm
+@section Credential cache server - KCM
+@cindex KCM
+@cindex Credential cache server
+
+When KCM running is easy for users to switch between different
+kerberos principals using @file{kswitch} or built in support in
+application, like OpenSSH's GSSAPIClientIdentity.
+
+Other advantages are that there is the long term credentials are not
+written to disk and on reboot the credential is removed when kcm
+process stopps running.
+
+Configure the system startup script to start the kcm process,
+@file{/usr/heimdal/libexec/kcm} and then configure the system to use kcm in @file{krb5.conf}.
+
+@example
+[libdefaults]
+	default_cc_type = KCM
+@end example
+
+Now when you run @command{kinit} it doesn't overwrite your existing
+credentials but rather just add them to the set of
+credentials. @command{klist -l} lists the credentials and the star
+marks the default credential.
+
+@example
+$ kinit lha@@KTH.SE
+lha@@KTH.SE's Password: 
+$ klist -l
+  Name         Cache name               Expires         
+lha@@KTH.SE   0                        Nov 22 23:09:40   *
+lha@@SU.SE    Initial default ccache   Nov 22 14:14:24   
+@end example
+
+When switching between credentials you can use @command{kswitch}.
+
+@example
+$ kswitch -i
+     Principal
+1    lha@@KTH.SE
+2    lha@@SU.SE
+Select number: 2
+@end example
+
+After switching, a new set of credentials are used as default.
+
+@example
+$ klist -l
+  Name         Cache name               Expires         
+lha@@SU.SE    Initial default ccache   Nov 22 14:14:24   *
+lha@@KTH.SE   0                        Nov 22 23:09:40   
+@end example
+
+Som applications, like openssh with Simon Wilkinsons patch applied,
+support specifiying that credential to use.  The example below will
+login to the host computer.kth.se using lha@@KTH.SE (not the current
+default credential).
+
+@example
+$ ssh \
+   -o GSSAPIAuthentication=yes \
+   -o GSSAPIKeyExchange=yes \
+   -o GSSAPIClientIdentity=lha@@KTH.SE \
+   computer.kth.se
+@end example
+
+
+
+@node Cross realm, Transit policy, Credential cache server - KCM, Setting up a realm
 @section Cross realm
 @cindex Cross realm
 
@@ -1213,8 +1260,8 @@ certificates to get the initial ticket (usually the krbtgt
 ticket-granting ticket).
 
 To use PK-INIT you must first have a PKI. If you don't have one, it is
-time to create it. You should first read the whole chapter of the
-document to see the requirements imposed on the CA software.
+time to create it. You should first read the whole current chapter of
+the document to see the requirements imposed on the CA software.
 
 A mapping between the PKI certificate and what principals that
 certificate is allowed to use must exist. There are several ways to do
@@ -1224,9 +1271,12 @@ the mapping in the principals entry in the kerberos database.
 
 @section Certificates
 
-This section documents the requirements on the KDC and client
-certificates and the format used in the id-pkinit-san OtherName
-extention.
+This and following subsection documents the requirements on the KDC
+and client certificates and the format used in the id-pkinit-san
+OtherName extention.
+
+On how to create certificates, you should read @ref{Use OpenSSL to
+create certificates}.
 
 @subsection KDC certificate
 
@@ -1256,7 +1306,7 @@ secret.
 @subsection Client certificate
 
 The client certificate may need to have a EKU id-pkekuoid
-(1.3.6.1.5.2.3.4) set depending on the certifiate on the KDC.
+(1.3.6.1.5.2.3.4) set depending on the configuration on the KDC.
 
 It possible to store the principal (if allowed by the KDC) in the
 certificate and thus delegate responsibility to do the mapping between
@@ -1399,8 +1449,6 @@ Credentials cache: API:4
 Mar 26 23:40:10  Mar 27 09:40:10  krbtgt/EXAMPLE.ORG@@EXAMPLE.ORG
 @end example
 
-TODO: Write about the KDC.
-
 @section Configure the client
 
 @example
@@ -1418,6 +1466,45 @@ TODO: Write about the KDC.
 @end example
 
 @section Configure the KDC
+
+Configuration options for the KDC.
+
+@table @asis
+@item enable-pkinit = bool
+
+Enable PKINIT for this KDC.
+
+@item pkinit_identity = string
+
+Identity that the KDC will use when talking to clients. Mandatory.
+
+@item pkinit_anchors = string
+
+Trust anchors that the KDC will use when evaluating the trust of the
+client certificate. Mandatory.
+
+@item pkinit_pool = strings ...
+
+Extra certificate the KDC will use when building trust chains if it
+can't find enough certificates in the request from the client.
+
+@item pkinit_allow_proxy_certificate = bool
+
+Allow clients to use proxy certificates, its the root certificate that
+is clients EE certificate that is used for authorisation.
+
+@item pkinit_win2k_require_binding = bool
+
+Require windows clients up be upgrade to not allow cut and paste
+attack on encrypted data, applies to Windows XP and windows 2000
+servers.
+
+@item pkinit_principal_in_certificate = bool
+
+Enable the KDC to use id-pkinit-san to determine to determine the
+mapping between a certificate and principal.
+
+@end table
 
 @example
 [kdc]
@@ -1443,6 +1530,13 @@ lha@@EXAMPLE.ORG:CN=Love,UID=lha
 @end example
 
 @subsection Using the Kerberos database
+
+You can also store the subject of the certificate in the principal
+entry in the kerberos database.
+
+@example
+kadmin modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" user@@REALM
+@end example
 
 @section Use hxtool to create certificates
 
@@ -1512,6 +1606,7 @@ hxtool validate FILE:user.pem
 @end example
 
 @section Use OpenSSL to create certificates
+@anchor{Use OpenSSL to create certificates}
 
 This section tries to give the CA owners hints how to create
 certificates using OpenSSL (or CA software based on OpenSSL).

@@ -1,3 +1,229 @@
+heimdal (1.6~git20120403+dfsg1-2) unstable; urgency=low
+
+  * Enable libcap-ng-dev only on Linux. Fixes FTBFS on kfreebsd-* and
+    hurd-*. Closes: #674923
+  * Support extra configure flags through dpkg-buildflags, to (for
+    example) enable hardened build flags. Thanks Moritz Muehlenhoff.
+    Closes: 668022
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Wed, 30 May 2012 12:25:33 +0200
+
+heimdal (1.6~git20120403+dfsg1-1) unstable; urgency=low
+
+  * Fix typo in example kdc.conf section name. LP: #871635
+  * New upstream snapshot.
+   + Drop 040_hurd_pthread, now applied upstream.
+   + Drop 043_hurd_ioctl, now applied upstream.
+  * Add dependency on libcap-ng-dev, so KDC can drop privileges.
+  * Build-Depend on libperl4-corelibs-perl for prototype script.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Thu, 03 May 2012 17:42:26 +0200
+
+heimdal (1.6~git20120311.dfsg.1-2) unstable; urgency=low
+
+  * Remove unnecessary Priority: fields for binary packages.
+  * Bump standards version to 3.9.3 (no changes).
+  * Fix description of libwind0-heimdal package.
+  * Update 041_hurd_maxhostnamelen to cover a few more uses of
+    MAXHOSTNAMELEN. Fixes FTBFS on hurd-i386. Thanks, Pino Toscano.
+    Closes: #666073
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Thu, 29 Mar 2012 01:59:36 +0200
+
+heimdal (1.6~git20120311.dfsg.1-1) unstable; urgency=low
+
+  * New upstream snapshot.
+   + Drop 011_sharedlibs patch, now upstream.
+  * Revert incorrect conflicts with kcc in heimdal-clients.
+  * Make roken, hx509, heimntlm and wind libraries priority optional.
+  * Rename kcc to heimtools, to avoid clashes with 'kcc' utility.
+    Closes: #644138
+  * Link with --as-needed to prevent unnecessary dependencies.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Wed, 14 Mar 2012 11:54:02 +0100
+
+heimdal (1.5.dfsg.1-3) unstable; urgency=low
+
+  * Add conflicts with kcc to heimdal-clients. Closes: #644138
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 03 Oct 2011 23:50:05 +0200
+
+heimdal (1.5.dfsg.1-2) unstable; urgency=low
+
+  * Re-merge 1.4.0-1 through 1.4.0-8.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sat, 01 Oct 2011 15:02:33 +0200
+
+heimdal (1.5.dfsg.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix symbolic links in heimdal-dev. Closes: #640278
+  * Add Vcs-Git header.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Wed, 21 Sep 2011 03:04:31 +0200
+
+heimdal (1.5~pre2+git20110813-1) experimental; urgency=low
+
+  * New upstream snapshot.
+  * Cherry-pick binary-arch fix from Ubuntu. Thanks Matthias Klose.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sat, 13 Aug 2011 18:22:32 +0200
+
+heimdal (1.5~pre2+git20110804-1) experimental; urgency=low
+
+  * New upstream snapshot.
+  * Install mech.5 and login.access.8.
+  * Install kdigest and gsstool in heimdal-clients.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Thu, 04 Aug 2011 02:14:09 +0200
+
+heimdal (1.5~pre2+git20110729-2) experimental; urgency=low
+
+  * Add support for multi-arch.
+  * Use separate config file for debconf.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 31 Jul 2011 19:00:53 +0200
+
+heimdal (1.5~pre2+git20110729-1) experimental; urgency=low
+
+  * New upstream snapshot.
+  * Switch to new style debhelper.
+  * Add 033_lorikeet: some hdb improvements required by Samba 4.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Fri, 29 Jul 2011 13:34:24 +0200
+
+heimdal (1.5~pre2+git20110720-2) experimental; urgency=low
+
+  * Fix dependency on pthreads when building on Linux 3.0.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Thu, 21 Jul 2011 17:40:58 +0200
+
+heimdal (1.5~pre2+git20110720-1) experimental; urgency=low
+
+  * New upstream snapshot.
+  * Bump standards version to 3.9.2 (no changes).
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Wed, 20 Jul 2011 19:31:02 +0200
+
+heimdal (1.4.0+git20110411.dfsg.1-1) experimental; urgency=low
+
+  * New upstream snapshot.
+   + Makes a few more hx509 functions public, required by newer versions of
+     Samba 4. Dropped 029_hx509_public patch.
+   + Introduces libgssapi3-heimdal.
+   + Switched to libeditline. Dropped libeditline patch.
+  * Add symbols files for all libraries.
+  * Fix paths in heimdal-gssapi.pc
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 10 Apr 2011 14:25:57 +0200
+
+heimdal (1.4.0+git20110220.dfsg.1-2) experimental; urgency=low
+
+  * Add 029_hx509_public: Make a few hx509 public, as required by
+    Samba 4.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 21 Feb 2011 20:29:50 +0100
+
+heimdal (1.4.0+git20110220.dfsg.1-1) experimental; urgency=low
+
+  * New upstream snapshot.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 20 Feb 2011 22:29:39 +0100
+
+heimdal (1.4.0+git20110124.dfsg.1-3) experimental; urgency=low
+
+  * Add missing dependencies on libkdc and libhdb to heimdal-multidev.
+  * Link with --as-needed.
+  * Fix linking with binutils-gold.
+  * Drop unnecessary conflicts with libreadline-dev.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Tue, 25 Jan 2011 15:21:12 -0800
+
+heimdal (1.4.0+git20110124.dfsg.1-2) experimental; urgency=low
+
+  * Install kcc. Closes: #608673
+  * Cherry-pick fix for kdc.h - required for Samba 4.
+  * Remove unsupported arguments for configure.
+  * Install krb5-config in multidev. Closes: #586521
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 24 Jan 2011 12:33:55 -0800
+
+heimdal (1.4.0+git20110124.dfsg.1-1) experimental; urgency=low
+
+  * Add build-conflicts with libreadline-dev, which breaks compilation.
+  * New upstream snapshot.
+  * Use dh-autoreconf to regenerate auto tools files.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 24 Jan 2011 11:18:05 -0800
+
+heimdal (1.4.0+git20101228.dfsg.1-1) experimental; urgency=low
+
+  * New upstream snapshot.
+   + No longer installs kauth.
+   + Fixes support for linking with --as-needed. Closes: #607589
+  * Build hcrypto library rather than using libssl. Required by Samba 4.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 20 Dec 2010 00:17:51 +0100
+
+heimdal (1.4.0-8) unstable; urgency=low
+
+  * Multiarch support.
+
+    In heimdal-multidev, move libraries from /usr/lib/heimdal to
+    /usr/lib/<triplet>/heimdal.
+
+    In heimdal-dev, move symlinks from /usr/lib to /usr/lib/<triplet>.
+
+ -- Brian May <bam@debian.org>  Wed, 06 Jul 2011 15:05:25 +1000
+
+heimdal (1.4.0-7) unstable; urgency=low
+
+  * NFS needs same dispensation to use DES as AFS (closes: #629276).
+
+ -- Brian May <bam@debian.org>  Tue, 07 Jun 2011 12:29:45 +1000
+
+heimdal (1.4.0-6) unstable; urgency=low
+
+  * Fix AFS support (closes: #627947), was broken by patches for
+    The Hurd in version 1.4.0.
+  * Remove ignored configure flags in debian/rules.
+
+ -- Brian May <bam@debian.org>  Sun, 29 May 2011 17:02:16 +1000
+
+heimdal (1.4.0-5) unstable; urgency=low
+
+  * Fix segfaults in kcm by upstream patches (closes: #618992).
+  * Remove *.la files (closes: #621340).
+
+ -- Brian May <bam@debian.org>  Thu, 07 Apr 2011 11:24:49 +1000
+
+heimdal (1.4.0-4) unstable; urgency=low
+
+  * Apply patches for The Hurd (closes: #483281).
+
+ -- Brian May <bam@debian.org>  Thu, 24 Feb 2011 10:43:05 +1100
+
+heimdal (1.4.0-3) unstable; urgency=low
+
+  * Make versioned depends for libkafs0-heimdal (closes: #613730).
+
+ -- Brian May <bam@debian.org>  Mon, 21 Feb 2011 11:31:48 +1100
+
+heimdal (1.4.0-2) unstable; urgency=low
+
+  * Fix description of heimdal-dbg package (closes: #605663).
+  * Fix FTBFS with ld --no-add-needed (closes: 607589).
+
+ -- Brian May <bam@debian.org>  Thu, 30 Dec 2010 11:20:11 +1100
+
+heimdal (1.4.0-1) unstable; urgency=low
+
+  * New upstream version.
+  * Update standards version to 3.9.1.
+  * Rewrite debian/rules clean list.
+
+ -- Brian May <bam@debian.org>  Tue, 02 Nov 2010 12:03:56 +1100
+
 heimdal (1.4.0~git20100726.dfsg.1-1) unstable; urgency=low
 
   * New upstream version.

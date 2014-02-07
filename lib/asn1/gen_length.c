@@ -80,15 +80,17 @@ length_type (const char *name, const Type *t,
 	    fprintf(codefile, "}\n");
 	} else if (t->range == NULL) {
 	    length_primitive ("heim_integer", name, variable);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    length_primitive ("integer64", name, variable);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    length_primitive ("unsigned64", name, variable);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    length_primitive ("integer", name, variable);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
-	    length_primitive ("unsigned", name, variable);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    length_primitive ("unsigned", name, variable);
 	} else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
 
 	break;
     case TBoolean:
@@ -187,13 +189,13 @@ length_type (const char *name, const Type *t,
 
 	fprintf (codefile,
 		 "{\n"
-		 "int %s_oldret = %s;\n"
+		 "size_t %s_oldret = %s;\n"
 		 "int i;\n"
 		 "%s = 0;\n",
 		 tmpstr, variable, variable);
 
 	fprintf (codefile, "for(i = (%s)->len - 1; i >= 0; --i){\n", name);
-	fprintf (codefile, "int %s_for_oldret = %s;\n"
+	fprintf (codefile, "size_t %s_for_oldret = %s;\n"
 		 "%s = 0;\n", tmpstr, variable, variable);
 	if (asprintf (&n, "&(%s)->val[i]", name) < 0  || n == NULL)
 	    errx(1, "malloc");
@@ -267,7 +269,7 @@ void
 generate_type_length (const Symbol *s)
 {
     fprintf (codefile,
-	     "size_t\n"
+	     "size_t ASN1CALL\n"
 	     "length_%s(const %s *data)\n"
 	     "{\n"
 	     "size_t ret = 0;\n",

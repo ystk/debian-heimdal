@@ -41,6 +41,7 @@ quilt add missing
 quilt add ylwrap
 
 quilt add admin/Makefile.in
+quilt add base/Makefile.in
 quilt add appl/afsutil/Makefile.in
 quilt add appl/dceutils/Makefile.in
 quilt add appl/ftp/common/Makefile.in

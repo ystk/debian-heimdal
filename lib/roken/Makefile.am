@@ -16,6 +16,9 @@ libroken_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 AM_CPPFLAGS += $(libroken_la_CPPFLAGS)
+if HAVE_DBHEADER
+AM_CPPFLAGS += -I$(DBHEADER)
+endif
 
 noinst_PROGRAMS = snprintf-test resolve-test rkpty
 
@@ -23,13 +26,15 @@ check_PROGRAMS = 				\
 		base64-test			\
 		getaddrinfo-test		\
 		getifaddrs-test			\
+		getxxyyy-test			\
 		hex-test			\
 		test-readenv			\
 		parse_bytes-test		\
 		parse_reply-test		\
 		parse_time-test			\
 		snprintf-test			\
-		strpftime-test
+		strpftime-test			\
+		tsearch-test
 
 TESTS = $(check_PROGRAMS)
 
@@ -37,7 +42,7 @@ LDADD = libroken.la
 make_roken_LDADD = 
 
 noinst_LTLIBRARIES = libtest.la
-libtest_la_SOURCES = strftime.c strptime.c snprintf.c
+libtest_la_SOURCES = strftime.c strptime.c snprintf.c tsearch.c
 libtest_la_CFLAGS = -DTEST_SNPRINTF -DTEST_STRPFTIME
 
 parse_reply_test_SOURCES = parse_reply-test.c resolve.c
@@ -55,6 +60,12 @@ strpftime_test_CFLAGS = -DTEST_STRPFTIME
 snprintf_test_SOURCES	= snprintf-test.c
 snprintf_test_LDADD = libtest.la $(LDADD)
 snprintf_test_CFLAGS	= -DTEST_SNPRINTF
+tsearch_test_SOURCES	= tsearch-test.c
+tsearch_test_LDADD = libtest.la $(LDADD)
+tsearch_test_CFLAGS	= -DTEST_TSEARCH
+
+getxxyyy_test_SOURCES	= getxxyyy.c
+getxxyyy_test_CFLAGS	= -DTEST_GETXXYYY
 
 resolve_test_SOURCES = resolve-test.c
 
@@ -76,6 +87,7 @@ libroken_la_SOURCES =		\
 	getarg.c		\
 	getnameinfo_verified.c	\
 	getprogname.c		\
+	getxxyyy.c		\
 	h_errno.c		\
 	hex.c			\
 	hostent_find_fqdn.c	\
@@ -89,6 +101,7 @@ libroken_la_SOURCES =		\
 	parse_time.c		\
 	parse_units.c		\
 	qsort.c			\
+	rand.c			\
 	realloc.c		\
 	resolve.c		\
 	roken_gethostby.c	\
@@ -117,6 +130,7 @@ EXTRA_libroken_la_SOURCES =	\
 	glob.hin		\
 	fnmatch.hin		\
 	ifaddrs.hin		\
+	search.hin		\
 	vis.hin	
 
 libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt)
@@ -149,6 +163,12 @@ else
 ifaddrs_h = ifaddrs.h
 endif
 
+if have_search_h
+search_h = 
+else
+search_h = search.h
+endif
+
 if have_vis_h
 vis_h = 
 else
@@ -156,8 +176,8 @@ vis_h = vis.h
 endif
 
 ## these are controlled by configure
-XHEADERS = $(err_h) $(fnmatch_h) $(glob_h) $(ifaddrs_h) $(vis_h)
-CLEANFILES += err.h fnmatch.h glob.h ifaddrs.h vis.h
+XHEADERS = $(err_h) $(fnmatch_h) $(glob_h) $(ifaddrs_h) $(search_h) $(vis_h)
+CLEANFILES += err.h fnmatch.h glob.h ifaddrs.h search.h vis.h
 
 dist_include_HEADERS = 				\
 	base64.h				\
@@ -215,6 +235,7 @@ endif
 
 
 EXTRA_DIST = \
+	NTMakefile \
 	roken.awk roken.h.in \
 	$(man_MANS) \
 	test-mem.h \

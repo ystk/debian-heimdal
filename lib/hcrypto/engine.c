@@ -244,6 +244,7 @@ ENGINE_load_builtin_engines(void)
     if (ret != 1)
 	ENGINE_finish(engine);
 
+#ifdef USE_HCRYPTO_TFM
     /*
      * TFM
      */
@@ -261,7 +262,9 @@ ENGINE_load_builtin_engines(void)
     ret = add_engine(engine);
     if (ret != 1)
 	ENGINE_finish(engine);
+#endif /* USE_HCRYPTO_TFM */
 
+#ifdef USE_HCRYPTO_LTM
     /*
      * ltm
      */
@@ -279,24 +282,7 @@ ENGINE_load_builtin_engines(void)
     ret = add_engine(engine);
     if (ret != 1)
 	ENGINE_finish(engine);
-
-    /*
-     * imath
-     */
-
-    engine = ENGINE_new();
-    if (engine == NULL)
-	return;
-
-    ENGINE_set_id(engine, "imath");
-    ENGINE_set_name(engine,
-		    "Heimdal crypto imath engine version " PACKAGE_VERSION);
-    ENGINE_set_RSA(engine, RSA_imath_method());
-    ENGINE_set_DH(engine, DH_imath_method());
-
-    ret = add_engine(engine);
-    if (ret != 1)
-	ENGINE_finish(engine);
+#endif
 
 #ifdef HAVE_GMP
     /*
@@ -353,7 +339,7 @@ ENGINE_by_dso(const char *path, const char *id)
 	    dlclose(handle);
 	    free(engine);
 	    return NULL;
-	}	
+	}
     }
 
     {
@@ -371,7 +357,7 @@ ENGINE_by_dso(const char *path, const char *id)
 	    dlclose(handle);
 	    free(engine);
 	    return NULL;
-	}	
+	}
     }
 
     ENGINE_up_ref(engine);

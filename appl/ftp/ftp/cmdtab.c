@@ -196,8 +196,8 @@ struct cmd cmdtab[] = {
 #if defined(KRB5)
 	{ "afslog",	afsloghelp,	0,	1,	0,	afslog },
 #endif
-	
-	{ 0 },
+
+	{ NULL, NULL, 0, 0, 0, NULL },
 };
 
 int	NCMDS = (sizeof (cmdtab) / sizeof (cmdtab[0])) - 1;

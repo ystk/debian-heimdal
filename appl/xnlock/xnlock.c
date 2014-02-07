@@ -263,15 +263,15 @@ init_words (int argc, char **argv)
 static void
 ScreenSaver(int save)
 {
-    static int timeout, interval, prefer_blank, allow_exp;
+    static int timeout, ival, prefer_blank, allow_exp;
     if(!appres.no_screensaver){
 	if (save) {
-	    XGetScreenSaver(dpy, &timeout, &interval,
+	    XGetScreenSaver(dpy, &timeout, &ival,
 			    &prefer_blank, &allow_exp);
-	    XSetScreenSaver(dpy, 0, interval, prefer_blank, allow_exp);
+	    XSetScreenSaver(dpy, 0, ival, prefer_blank, allow_exp);
 	} else
 	    /* restore state */
-	    XSetScreenSaver(dpy, timeout, interval, prefer_blank, allow_exp);
+	    XSetScreenSaver(dpy, timeout, ival, prefer_blank, allow_exp);
     }
 }
 
@@ -504,11 +504,11 @@ post_prompt_box(Window window)
 static void
 RaiseWindow(Widget w, XEvent *ev, String *s, Cardinal *n)
 {
-  Widget x;
+  Widget new;
   if(!XtIsRealized(w))
     return;
-  x = XtParent(w);
-  XRaiseWindow(dpy, XtWindow(x));
+  new = XtParent(w);
+  XRaiseWindow(dpy, XtWindow(new));
 }
 
 
@@ -998,7 +998,7 @@ main (int argc, char **argv)
 	struct xxx{
 	    Pixel bg;
 	}res;
-	
+
 	XtResource Res[] = {
 	    { XtNbackground, XtCBackground, XtRPixel, sizeof(Pixel),
 	      XtOffsetOf(struct xxx, bg), XtRString, "black" }
@@ -1072,7 +1072,7 @@ main (int argc, char **argv)
 			 GrabModeAsync, XtWindow(widget),
 			 None, CurrentTime)) != 0)
 	errx(1, "Failed to grab pointer (%d)", i);
-	
+
     if((i = XGrabKeyboard(dpy, XtWindow(widget), True, GrabModeAsync,
 			  GrabModeAsync, CurrentTime)) != 0)
 	errx(1, "Failed to grab keyboard (%d)", i);

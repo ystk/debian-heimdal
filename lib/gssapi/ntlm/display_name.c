@@ -33,7 +33,8 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_display_name
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_display_name
            (OM_uint32 * minor_status,
             const gss_name_t input_name,
             gss_buffer_t output_name_buffer,
@@ -49,7 +50,7 @@ OM_uint32 _gss_ntlm_display_name
 	ntlm_name n = (ntlm_name)input_name;
 	char *str = NULL;
 	int len;
-	
+
 	output_name_buffer->length = 0;
 	output_name_buffer->value = NULL;
 

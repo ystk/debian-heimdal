@@ -84,6 +84,7 @@ HEIMDAL_ROKEN_1.0 {
 		rk_pid_file_write;
 		rk_pidfile;
 		rk_pipe_execv;
+		rk_random_init;
 		rk_read_environment;
 		rk_readv;
 		rk_realloc;
@@ -124,6 +125,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_strsvis;
 		rk_strsvis;
 		rk_strsvisx;
+		rk_strtoll;
+		rk_strtoull;
 		rk_strunvis;
 		rk_strunvis;
 		rk_strunvisx;
@@ -138,6 +141,10 @@ HEIMDAL_ROKEN_1.0 {
 		rk_timevaladd;
 		rk_timevalfix;
 		rk_timevalsub;
+		rk_tdelete;
+		rk_tfind;
+		rk_tsearch;
+		rk_twalk;
 		rk_undumpdata;
 		rk_unvis;
 		rk_vasnprintf;

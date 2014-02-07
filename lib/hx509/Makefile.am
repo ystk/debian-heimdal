@@ -54,6 +54,7 @@ AM_YFLAGS = -d
 dist_libhx509_la_SOURCES = \
 	ca.c \
 	cert.c \
+	char_map.h \
 	cms.c \
 	collector.c \
 	crypto.c \
@@ -88,11 +89,14 @@ dist_libhx509_la_SOURCES = \
 
 sel-lex.c: sel-gram.h
 
+libhx509_la_DEPENDENCIES = version-script.map
+
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
+	$(top_builddir)/base/libheimbase.la \
 	$(LIBADD_roken) \
 	$(LIB_dlopen)
 
@@ -125,27 +129,27 @@ priv_headers += crmf_asn1-priv.h
 
 
 ocsp_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/ocsp.asn1 $(srcdir)/ocsp.opt
-	$(ASN1_COMPILE) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
+	$(heim_verbose)$(ASN1_COMPILE) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
 
 pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1 $(srcdir)/pkcs10.opt
-	$(ASN1_COMPILE) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
+	$(heim_verbose)$(ASN1_COMPILE) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
 crmf_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/crmf.asn1
-	$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
+	$(heim_verbose)$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
 
 $(libhx509_la_OBJECTS): $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h $(srcdir)/hx_locl.h
 $(libhx509_la_OBJECTS): ocsp_asn1.h pkcs10_asn1.h
 
 $(srcdir)/hx509-protos.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
+	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
 
 $(srcdir)/hx509-private.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
+	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
 
 bin_PROGRAMS = hxtool
 
 hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC)
-	$(SLC) $(srcdir)/hxtool-commands.in
+	$(heim_verbose)$(SLC) $(srcdir)/hxtool-commands.in
 
 dist_hxtool_SOURCES = hxtool.c
 nodist_hxtool_SOURCES = hxtool-commands.c hxtool-commands.h
@@ -198,6 +202,9 @@ LDADD = libhx509.la
 test_soft_pkcs11_LDADD = libhx509.la
 test_soft_pkcs11_CPPFLAGS = -I$(srcdir)/ref
 
+test_name_CPPFLAGS = $(INCLUDE_hcrypto)
+test_name_LDADD = libhx509.la $(LIB_roken)
+
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 
 PROGRAM_TESTS = 		\
@@ -220,7 +227,7 @@ SCRIPT_TESTS = 			\
 	test_windows		\
 	test_query
 
-do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' \
+do_subst = $(heim_verbose)sed -e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/lib/hx509,g' \
 	-e 's,[@]egrep[@],$(EGREP),g'
 
@@ -295,12 +302,18 @@ test_query: test_query.in Makefile
 	mv test_query.tmp test_query
 
 EXTRA_DIST = \
+	NTMakefile \
+	hxtool-version.rc \
+	libhx509-exports.def \
 	version-script.map \
 	crmf.asn1 \
 	hx509_err.et \
 	hxtool-commands.in \
+	quote.py \
 	ocsp.asn1 \
+	ocsp.opt \
 	pkcs10.asn1 \
+	pkcs10.opt \
 	test_ca.in \
 	test_chain.in \
 	test_cert.in \
@@ -416,6 +429,7 @@ EXTRA_DIST = \
 	data/test.crt \
 	data/test.key \
 	data/test.p12 \
+	data/win-u16-in-printablestring.der \
 	data/yutaka-pad-broken-ca.pem \
 	data/yutaka-pad-broken-cert.pem \
 	data/yutaka-pad-ok-ca.pem \
