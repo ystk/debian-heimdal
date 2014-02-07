@@ -55,7 +55,21 @@ der_copy_integer (const int *from, int *to)
 }
 
 int
+der_copy_integer64 (const int64_t *from, int64_t *to)
+{
+    *to = *from;
+    return 0;
+}
+
+int
 der_copy_unsigned (const unsigned *from, unsigned *to)
+{
+    *to = *from;
+    return 0;
+}
+
+int
+der_copy_unsigned64 (const uint64_t *from, uint64_t *to)
 {
     *to = *from;
     return 0;
@@ -85,14 +99,20 @@ int
 der_copy_printable_string (const heim_printable_string *from,
 		       heim_printable_string *to)
 {
-    return der_copy_general_string(from, to);
+    to->length = from->length;
+    to->data   = malloc(to->length + 1);
+    if(to->data == NULL)
+	return ENOMEM;
+    memcpy(to->data, from->data, to->length);
+    ((char *)to->data)[to->length] = '\0';
+    return 0;
 }
 
 int
-der_copy_ia5_string (const heim_printable_string *from,
-		     heim_printable_string *to)
+der_copy_ia5_string (const heim_ia5_string *from,
+		     heim_ia5_string *to)
 {
-    return der_copy_general_string(from, to);
+    return der_copy_printable_string(from, to);
 }
 
 int

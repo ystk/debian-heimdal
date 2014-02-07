@@ -33,10 +33,10 @@
 
 #include "config.h"
 
+#include <roken.h>
 #include <stdio.h>
 #include <gssapi.h>
 #include <err.h>
-#include <roken.h>
 #include <getarg.h>
 #include "test_common.h"
 
@@ -118,7 +118,7 @@ test_libntlm_v1(int flags)
 	heim_ntlm_nt_key(password, &key);
 
 	heim_ntlm_calculate_ntlm1(key.data, key.length,
-				  type2.challange,
+				  type2.challenge,
 				  &type3.ntlm);
 
 	if (flags & NTLM_NEG_KEYEX) {
@@ -245,7 +245,7 @@ test_libntlm_v2(int flags)
 	heim_ntlm_calculate_ntlm2(key.data, key.length,
 				  user,
 				  type2.targetname,
-				  type2.challange,
+				  type2.challenge,
 				  &type2.targetinfo,
 				  ntlmv2,
 				  &type3.ntlm);
@@ -309,11 +309,11 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int ret = 0, optind = 0;
+    int ret = 0, optidx = 0;
 
     setprogname(argv[0]);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
     if (help_flag)
@@ -324,8 +324,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     ret += test_libntlm_v1(0);
     ret += test_libntlm_v1(NTLM_NEG_KEYEX);

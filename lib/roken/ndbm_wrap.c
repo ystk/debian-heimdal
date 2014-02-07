@@ -34,7 +34,11 @@
 #include <config.h>
 
 #include "ndbm_wrap.h"
-#if defined(HAVE_DB4_DB_H)
+#if defined(HAVE_DBHEADER)
+#include <db.h>
+#elif defined(HAVE_DB5_DB_H)
+#include <db5/db.h>
+#elif defined(HAVE_DB4_DB_H)
 #include <db4/db.h>
 #elif defined(HAVE_DB3_DB_H)
 #include <db3/db.h>
@@ -107,19 +111,20 @@ static datum
 dbm_get (DB *db, int flags)
 {
     DBT key, value;
-    datum datum;
+    datum d;
 #ifdef HAVE_DB3
     if(cursor == NULL)
 	db->cursor(db, NULL, &cursor, 0);
     if(cursor->c_get(cursor, &key, &value, flags) != 0) {
-	datum.dptr = NULL;
-	datum.dsize = 0;
+	d.dptr = NULL;
+	d.dsize = 0;
     } else
-	DBT2DATUM(&value, &datum);
+	DBT2DATUM(&value, &d);
 #else
     db->seq(db, &key, &value, flags);
+    DBT2DATUM(&value, &d);
 #endif
-    return datum;
+    return d;
 }
 
 #ifndef DB_FIRST
@@ -144,8 +149,10 @@ dbm_nextkey (DBM *db)
 ROKEN_LIB_FUNCTION DBM* ROKEN_LIB_CALL
 dbm_open (const char *file, int flags, mode_t mode)
 {
-    DB *db;
+#ifdef HAVE_DB3
     int myflags = 0;
+#endif
+    DB *db;
     char *fn = malloc(strlen(file) + 4);
     if(fn == NULL)
 	return NULL;

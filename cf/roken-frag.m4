@@ -28,7 +28,10 @@ dnl C characteristics
 AC_REQUIRE([AC_C___ATTRIBUTE__])
 AC_REQUIRE([AC_C_INLINE])
 AC_REQUIRE([AC_C_CONST])
-rk_WFLAGS(-Wall -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs)
+rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs -Wshadow)
+
+dnl -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wstrict-prototypes
+dnl -Wcast-qual -Wswitch -Wformat=2 -Wwrite-strings
 
 AC_REQUIRE([rk_DB])
 
@@ -65,6 +68,7 @@ AC_CHECK_HEADERS([\
 	poll.h					\
 	pwd.h					\
 	rpcsvc/ypclnt.h				\
+	search.h				\
 	shadow.h				\
 	stdint.h				\
 	sys/bswap.h				\
@@ -149,6 +153,7 @@ AC_REQUIRE([CHECK_NETINET_IP_AND_TCP])
 
 AM_CONDITIONAL(have_err_h, test "$ac_cv_header_err_h" = yes)
 AM_CONDITIONAL(have_ifaddrs_h, test "$ac_cv_header_ifaddrs_h" = yes)
+AM_CONDITIONAL(have_search_h, test "$ac_cv_header_search_h" = yes)
 AM_CONDITIONAL(have_vis_h, test "$ac_cv_header_vis_h" = yes)
 
 dnl Check for functions and libraries
@@ -182,13 +187,11 @@ AC_CHECK_FUNCS([				\
 	getprogname				\
 	getrlimit				\
 	getspnam				\
-	initstate				\
 	issetugid				\
 	on_exit					\
 	poll					\
 	random					\
 	setprogname				\
-	setstate				\
 	strsvis					\
 	strsvisx				\
 	strunvis				\
@@ -197,6 +200,9 @@ AC_CHECK_FUNCS([				\
 	svis					\
 	sysconf					\
 	sysctl					\
+	tdelete					\
+	tfind					\
+	twalk					\
 	uname					\
 	unvis					\
 	vasnprintf				\
@@ -367,8 +373,11 @@ AC_BROKEN([					\
 	strsep					\
 	strsep_copy				\
 	strtok_r				\
+	strtoll					\
+	strtoull				\
 	strupr					\
 	swab					\
+	tsearch					\
 	timegm					\
 	unsetenv				\
 	verr					\
@@ -386,6 +395,14 @@ AM_CONDITIONAL(have_fnmatch_h,
 
 AC_FOREACH([rk_func], [strndup strsep strtok_r],
 	[AC_NEED_PROTO([#include <string.h>], rk_func)])
+
+AC_CHECK_FUNC([strtoll],
+    [AC_DEFINE_UNQUOTED(HAVE_STRTOLL, 1,
+        [Define if you have the function strtoll.])])
+
+AC_CHECK_FUNC([strtoull],
+    [AC_DEFINE_UNQUOTED(HAVE_STRTOULL, 1,
+        [Define if you have the function strtoull.])])
 
 AC_FOREACH([rk_func], [strsvis strsvisx strunvis strvis strvisx svis unvis vis],
 [AC_NEED_PROTO([#ifdef HAVE_VIS_H

@@ -216,7 +216,7 @@ WITH			{ return kw_WITH; }
 			    char *p = buf;
 			    int f = 0;
 			    int skip_ws = 0;
-		
+
 			    while((c = input()) != EOF) {
 				if(isspace(c) && skip_ws) {
 				    if(c == '\n')
@@ -224,7 +224,7 @@ WITH			{ return kw_WITH; }
 				    continue;
 				}
 				skip_ws = 0;
-			
+
 				if(c == '"') {
 				    if(f) {
 					*p++ = '"';
@@ -255,10 +255,10 @@ WITH			{ return kw_WITH; }
 			}
 
 -?0x[0-9A-Fa-f]+|-?[0-9]+ { char *e, *y = yytext;
-			  yylval.constant = strtol((const char *)yytext,
+			  yylval.constant = strtoll((const char *)yytext,
 						   &e, 0);
 			  if(e == y)
-			    error_message("malformed constant (%s)", yytext);
+			    lex_error_message("malformed constant (%s)", yytext);
 			  else
 			    return NUMBER;
 			}
@@ -270,7 +270,7 @@ WITH			{ return kw_WITH; }
 \n			{ ++lineno; }
 \.\.\.			{ return ELLIPSIS; }
 \.\.			{ return RANGE; }
-.			{ error_message("Ignoring char(%c)\n", *yytext); }
+.			{ lex_error_message("Ignoring char(%c)\n", *yytext); }
 %%
 
 #ifndef yywrap /* XXX */
@@ -282,7 +282,7 @@ yywrap ()
 #endif
 
 void
-error_message (const char *format, ...)
+lex_error_message (const char *format, ...)
 {
     va_list args;
 
@@ -296,5 +296,5 @@ error_message (const char *format, ...)
 static void
 unterminated(const char *type, unsigned start_lineno)
 {
-    error_message("unterminated %s, possibly started on line %d\n", type, start_lineno);
+    lex_error_message("unterminated %s, possibly started on line %d\n", type, start_lineno);
 }

@@ -37,8 +37,8 @@ static int help_flag = 0;
 static int version_flag = 0;
 
 static struct getargs args[] = {
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag,    NULL, NULL }
 };
 
 static void
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	ret = krb5_get_default_principal(context, &principal);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_get_default_principal");
-		     
+
     }
 
     ret = krb5_get_init_creds_password (context,

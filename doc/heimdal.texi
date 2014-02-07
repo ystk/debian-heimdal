@@ -84,19 +84,20 @@ Setting up a realm
 * Creating the database::       
 * Modifying the database::      
 * keytabs::                     
-* Serving Kerberos 4/524/kaserver::  
 * Remote administration::       
 * Password changing::           
 * Testing clients and servers::  
 * Slave Servers::               
 * Incremental propagation::     
 * Encryption types and salting::                     
+* Credential cache server - KCM::
 * Cross realm::                 
 * Transit policy::              
 * Setting up DNS::              
 * Using LDAP to store the database::  
 * Providing Kerberos credentials to servers and programs::  
 * Setting up PK-INIT::
+* Debugging Kerberos problems::
 
 Applications
 
@@ -112,7 +113,6 @@ Kerberos 4 issues
 
 * Principal conversion issues::  
 * Converting a version 4 database::  
-* kaserver::                    
 
 Windows compatibility
 

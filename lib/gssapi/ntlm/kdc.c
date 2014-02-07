@@ -299,11 +299,11 @@ kdc_type2(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    if (challange.length != sizeof(type2.challange)) {
+    if (challange.length != sizeof(type2.challenge)) {
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
     }
-    memcpy(type2.challange, challange.data, sizeof(type2.challange));
+    memcpy(type2.challenge, challange.data, sizeof(type2.challenge));
     krb5_data_free(&challange);
 
     ret = krb5_ntlm_init_get_targetname(c->context, c->ntlm,
@@ -322,7 +322,7 @@ kdc_type2(OM_uint32 *minor_status,
 
     type2.targetinfo.data = ti.data;
     type2.targetinfo.length = ti.length;
-	
+
     ret = heim_ntlm_encode_type2(&type2, &data);
     free(type2.targetname);
     krb5_data_free(&ti);
@@ -330,7 +330,7 @@ kdc_type2(OM_uint32 *minor_status,
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }
-	
+
     out->data = data.data;
     out->length = data.length;
 

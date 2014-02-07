@@ -240,7 +240,7 @@ default_db(krb5_context context, sqlite3 **db)
 	krb5_clear_error_message(context);
 	return ENOENT;
     }
-	
+
 #ifdef TRACEME
     sqlite3_trace(*db, trace, NULL);
 #endif
@@ -293,7 +293,7 @@ out:
 
 
 
-static krb5_scache *
+static krb5_scache * KRB5_CALLCONV
 scc_alloc(krb5_context context, const char *name)
 {
     krb5_error_code ret;
@@ -309,7 +309,6 @@ scc_alloc(krb5_context context, const char *name)
 	char *file;
 
 	if (*name == '\0') {
-	    krb5_error_code ret;
 	    ret = get_def_name(context, &s->name);
 	    if (ret)
 		s->name = strdup(SCACHE_DEF_NAME);
@@ -478,14 +477,14 @@ bind_principal(krb5_context context,
  *
  */
 
-static const char*
+static const char* KRB5_CALLCONV
 scc_get_name(krb5_context context,
 	     krb5_ccache id)
 {
     return SCACHE(id)->name;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 {
     krb5_scache *s;
@@ -518,8 +517,8 @@ scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	    sqlite3_reset(s->scache_name);
 	    krb5_set_error_message(context, KRB5_CC_END,
 				   N_("Cache name of wrong type "
-				      "for scache %ld", ""),
-				  (unsigned long)s->name);
+				      "for scache %s", ""),
+				   s->name);
 	    scc_free(s);
 	    return KRB5_CC_END;
 	}
@@ -536,7 +535,7 @@ scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_gen_new(krb5_context context, krb5_ccache *id)
 {
     krb5_scache *s;
@@ -555,7 +554,7 @@ scc_gen_new(krb5_context context, krb5_ccache *id)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_initialize(krb5_context context,
 	       krb5_ccache id,
 	       krb5_principal primary_principal)
@@ -619,7 +618,7 @@ rollback:
 
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_close(krb5_context context,
 	  krb5_ccache id)
 {
@@ -627,7 +626,7 @@ scc_close(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
@@ -705,7 +704,7 @@ decode_creds(krb5_context context, const void *data, size_t length,
 }
 
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_store_cred(krb5_context context,
 	       krb5_ccache id,
 	       krb5_creds *creds)
@@ -770,7 +769,7 @@ scc_store_cred(krb5_context context,
 	bind_principal(context, s->db, s->iprincipal, 1, creds->server);
 	sqlite3_bind_int(s->iprincipal, 2, 1);
 	sqlite3_bind_int(s->iprincipal, 3, credid);
-	
+
 	do {
 	    ret = sqlite3_step(s->iprincipal);
 	} while (ret == SQLITE_ROW);
@@ -788,7 +787,7 @@ scc_store_cred(krb5_context context,
 	bind_principal(context, s->db, s->iprincipal, 1, creds->client);
 	sqlite3_bind_int(s->iprincipal, 2, 0);
 	sqlite3_bind_int(s->iprincipal, 3, credid);
-	
+
 	do {
 	    ret = sqlite3_step(s->iprincipal);
 	} while (ret == SQLITE_ROW);
@@ -813,7 +812,7 @@ rollback:
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_principal(krb5_context context,
 		  krb5_ccache id,
 		  krb5_principal *principal)
@@ -837,7 +836,7 @@ scc_get_principal(krb5_context context,
 			       s->name, s->file);
 	return KRB5_CC_END;
     }
-	
+
     if (sqlite3_column_type(s->scache, 0) != SQLITE_TEXT) {
 	sqlite3_reset(s->scache);
 	krb5_set_error_message(context, KRB5_CC_END,
@@ -869,7 +868,7 @@ struct cred_ctx {
     sqlite3_stmt *credstmt;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_first (krb5_context context,
 	       krb5_ccache id,
 	       krb5_cc_cursor *cursor)
@@ -902,8 +901,8 @@ scc_get_first (krb5_context context,
 	return KRB5_CC_END;
     }
 
-    ret = asprintf(&name, "credIteration%luPid%d",
-	     (unsigned long)ctx, (int)getpid());
+    ret = asprintf(&name, "credIteration%pPid%d",
+                   ctx, (int)getpid());
     if (ret < 0 || name == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
@@ -975,7 +974,7 @@ scc_get_first (krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_next (krb5_context context,
 	      krb5_ccache id,
 	      krb5_cc_cursor *cursor,
@@ -1028,7 +1027,7 @@ next:
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_end_get (krb5_context context,
 	     krb5_ccache id,
 	     krb5_cc_cursor *cursor)
@@ -1047,7 +1046,7 @@ scc_end_get (krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_remove_cred(krb5_context context,
 		 krb5_ccache id,
 		 krb5_flags which,
@@ -1103,7 +1102,7 @@ scc_remove_cred(krb5_context context,
 	ret = decode_creds(context, data, len, &creds);
 	if (ret)
 	    break;
-	
+
 	ret = krb5_compare_creds(context, which, mcreds, &creds);
 	krb5_free_cred_contents(context, &creds);
 	if (ret) {
@@ -1137,21 +1136,21 @@ scc_remove_cred(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_set_flags(krb5_context context,
 	      krb5_ccache id,
 	      krb5_flags flags)
 {
     return 0; /* XXX */
 }
-		
+
 struct cache_iter {
     char *drop;
     sqlite3 *db;
     sqlite3_stmt *stmt;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
     struct cache_iter *ctx;
@@ -1173,8 +1172,8 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ret;
     }
 
-    ret = asprintf(&name, "cacheIteration%luPid%d",
-	     (unsigned long)ctx, (int)getpid());
+    ret = asprintf(&name, "cacheIteration%pPid%d",
+                   ctx, (int)getpid());
     if (ret < 0 || name == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
@@ -1242,7 +1241,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_cache_next(krb5_context context,
 		   krb5_cc_cursor cursor,
 		   krb5_ccache *id)
@@ -1277,7 +1276,7 @@ again:
     return scc_resolve(context, id, name);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
 {
     struct cache_iter *ctx = cursor;
@@ -1290,7 +1289,7 @@ scc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_scache *sfrom = SCACHE(from);
@@ -1315,7 +1314,7 @@ scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
     if (sto->cid != SCACHE_INVALID_CID) {
 	/* drop old cache entry */
-	
+
 	sqlite3_bind_int(sfrom->dcache, 1, sto->cid);
 	do {
 	    ret = sqlite3_step(sfrom->dcache);
@@ -1359,7 +1358,7 @@ rollback:
     return KRB5_CC_IO;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_default_name(krb5_context context, char **str)
 {
     krb5_error_code ret;
@@ -1381,7 +1380,7 @@ scc_get_default_name(krb5_context context, char **str)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_set_default(krb5_context context, krb5_ccache id)
 {
     krb5_scache *s = SCACHE(id);
@@ -1445,7 +1444,10 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     scc_end_cache_get,
     scc_move,
     scc_get_default_name,
-    scc_set_default
+    scc_set_default,
+    NULL,
+    NULL,
+    NULL
 };
 
 #endif

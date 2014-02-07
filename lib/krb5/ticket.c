@@ -177,7 +177,7 @@ krb5_ticket_get_endtime(krb5_context context,
  *
  * @ingroup krb5_ticket
  */
-unsigned long
+KRB5_LIB_FUNCTION unsigned long KRB5_LIB_CALL
 krb5_ticket_get_flags(krb5_context context,
 		      const krb5_ticket *ticket)
 {
@@ -195,7 +195,7 @@ find_type_in_ad(krb5_context context,
 		int level)
 {
     krb5_error_code ret = 0;
-    int i;
+    size_t i;
 
     if (level > 9) {
 	ret = ENOENT; /* XXX */
@@ -592,7 +592,9 @@ check_client_referral(krb5_context context,
     return 0;
 
 noreferral:
-    if (krb5_principal_compare(context, requested, mapped) == FALSE) {
+    if (krb5_principal_compare(context, requested, mapped) == FALSE &&
+	!rep->enc_part.flags.enc_pa_rep)
+    {
 	krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
 			       N_("Not same client principal returned "
 				  "as requested", ""));
@@ -602,7 +604,7 @@ noreferral:
 }
 
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 decrypt_tkt (krb5_context context,
 	     krb5_keyblock *key,
 	     krb5_key_usage usage,
@@ -639,7 +641,7 @@ decrypt_tkt (krb5_context context,
 				   &size);
     krb5_data_free (&data);
     if (ret) {
-        krb5_set_error_message(context, ret, 
+        krb5_set_error_message(context, ret,
 			       N_("Failed to decode encpart in ticket", ""));
 	return ret;
     }
@@ -656,12 +658,13 @@ _krb5_extract_ticket(krb5_context context,
 		     krb5_addresses *addrs,
 		     unsigned nonce,
 		     unsigned flags,
+		     krb5_data *request,
 		     krb5_decrypt_proc decrypt_proc,
 		     krb5_const_pointer decryptarg)
 {
     krb5_error_code ret;
     krb5_principal tmp_principal;
-    size_t len;
+    size_t len = 0;
     time_t tmp_time;
     krb5_timestamp sec_now;
 
@@ -673,6 +676,48 @@ _krb5_extract_ticket(krb5_context context,
     ret = (*decrypt_proc)(context, key, key_usage, decryptarg, rep);
     if (ret)
 	goto out;
+
+    if (rep->enc_part.flags.enc_pa_rep && request) {
+	krb5_crypto crypto = NULL;
+	Checksum cksum;
+	PA_DATA *pa = NULL;
+	int idx = 0;
+
+	_krb5_debug(context, 5, "processing enc-ap-rep");
+
+	if (rep->enc_part.encrypted_pa_data == NULL ||
+	    (pa = krb5_find_padata(rep->enc_part.encrypted_pa_data->val,
+				   rep->enc_part.encrypted_pa_data->len,
+				   KRB5_PADATA_REQ_ENC_PA_REP,
+				   &idx)) == NULL)
+	{
+	    _krb5_debug(context, 5, "KRB5_PADATA_REQ_ENC_PA_REP missing");
+	    ret = KRB5KRB_AP_ERR_MODIFIED;
+	    goto out;
+	}
+	
+	ret = krb5_crypto_init(context, key, 0, &crypto);
+	if (ret)
+	    goto out;
+	
+	ret = decode_Checksum(pa->padata_value.data,
+			      pa->padata_value.length,
+			      &cksum, NULL);
+	if (ret) {
+	    krb5_crypto_destroy(context, crypto);
+	    goto out;
+	}
+	
+	ret = krb5_verify_checksum(context, crypto,
+				   KRB5_KU_AS_REQ,
+				   request->data, request->length,
+				   &cksum);
+	krb5_crypto_destroy(context, crypto);
+	free_Checksum(&cksum);
+	_krb5_debug(context, 5, "enc-ap-rep: %svalid", (ret == 0) ? "" : "in");
+	if (ret)
+	    goto out;
+    }
 
     /* save session key */
 
@@ -688,10 +733,10 @@ _krb5_extract_ticket(krb5_context context,
     }
 
     /* compare client and save */
-    ret = _krb5_principalname2krb5_principal (context,
-					      &tmp_principal,
-					      rep->kdc_rep.cname,
-					      rep->kdc_rep.crealm);
+    ret = _krb5_principalname2krb5_principal(context,
+					     &tmp_principal,
+					     rep->kdc_rep.cname,
+					     rep->kdc_rep.crealm);
     if (ret)
 	goto out;
 
@@ -748,7 +793,7 @@ _krb5_extract_ticket(krb5_context context,
 
     /* compare nonces */
 
-    if (nonce != rep->enc_part.nonce) {
+    if (nonce != (unsigned)rep->enc_part.nonce) {
 	ret = KRB5KRB_AP_ERR_MODIFIED;
 	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
 	goto out;
@@ -828,7 +873,7 @@ _krb5_extract_ticket(krb5_context context,
 	creds->addresses.val = NULL;
     }
     creds->flags.b = rep->enc_part.flags;
-	
+
     creds->authdata.len = 0;
     creds->authdata.val = NULL;
 

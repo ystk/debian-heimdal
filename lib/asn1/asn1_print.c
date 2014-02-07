@@ -41,9 +41,8 @@
 #include <err.h>
 #include <der.h>
 
-RCSID("$Id$");
-
 static int indent_flag = 1;
+static int inner_flag = 0;
 
 static unsigned long indefinite_form_loop;
 static unsigned long indefinite_form_loop_max = 10000;
@@ -167,25 +166,68 @@ loop (unsigned char *buf, size_t len, int indent)
 	    }
 	    case UT_OctetString : {
 		heim_octet_string str;
-		int i;
-		unsigned char *uc;
+		size_t i;
 
 		ret = der_get_octet_string (buf, length, &str, NULL);
 		if (ret)
 		    errx (1, "der_get_octet_string: %s", error_message (ret));
 		printf ("(length %lu), ", (unsigned long)length);
-		uc = (unsigned char *)str.data;
-		for (i = 0; i < min(16,length); ++i)
-		    printf ("%02x", uc[i]);
-		printf ("\n");
+
+		if (inner_flag) {
+		    Der_class c;
+		    Der_type ty;
+		    unsigned int ta;
+
+		    ret = der_get_tag(str.data, str.length, &c, &ty, &ta, &sz);
+		    if (ret || sz > str.length ||
+			type != CONS || tag != UT_Sequence)
+			goto just_an_octet_string;
+
+		    printf("{\n");
+		    loop (str.data, str.length, indent + 2);
+		    for (i = 0; i < indent; ++i)
+			printf (" ");
+		    printf ("}\n");
+
+		} else {
+		    unsigned char *uc;
+
+		just_an_octet_string:
+		    uc = (unsigned char *)str.data;
+		    for (i = 0; i < min(16,length); ++i)
+			printf ("%02x", uc[i]);
+		    printf ("\n");
+		}
 		free (str.data);
+		break;
+	    }
+	    case UT_IA5String :
+	    case UT_PrintableString : {
+		heim_printable_string str;
+		unsigned char *s;
+		size_t n;
+
+		memset(&str, 0, sizeof(str));
+
+		ret = der_get_printable_string (buf, length, &str, NULL);
+		if (ret)
+		    errx (1, "der_get_general_string: %s",
+			  error_message (ret));
+		s = str.data;
+		printf("\"");
+		for (n = 0; n < str.length; n++) {
+		    if (isprint((int)s[n]))
+			printf ("%c", s[n]);
+		    else
+			printf ("#%02x", s[n]);
+		}
+		printf("\"\n");
+		der_free_printable_string(&str);
 		break;
 	    }
 	    case UT_GeneralizedTime :
 	    case UT_GeneralString :
-	    case UT_PrintableString :
 	    case UT_VisibleString :
-	    case UT_IA5String :
 	    case UT_UTF8String : {
 		heim_general_string str;
 
@@ -219,7 +261,7 @@ loop (unsigned char *buf, size_t len, int indent)
 		ret = der_get_integer (buf, length, &num, NULL);
 		if (ret)
 		    errx (1, "der_get_enum: %s", error_message (ret));
-	
+
 		printf("%u\n", num);
 		break;
 	    }
@@ -272,9 +314,11 @@ doit (const char *filename)
 static int version_flag;
 static int help_flag;
 struct getargs args[] = {
-    { "indent", 0, arg_negative_flag, &indent_flag },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "indent", 0, arg_negative_flag, &indent_flag, NULL, NULL },
+    { "inner", 0, arg_flag, &inner_flag,
+      "try to parse inner structures of OCTET STRING", NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 

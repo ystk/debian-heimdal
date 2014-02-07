@@ -38,10 +38,6 @@
 #include <util.h>
 #endif
 
-#ifdef __APPLE__
-#include <sandbox.h>
-#endif
-
 #ifdef HAVE_CAPNG
 #include <cap-ng.h>
 #endif
@@ -84,11 +80,11 @@ switch_environment(void)
 
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	    err(1, "initgroups failed");
-	
+
 #ifndef HAVE_CAPNG
 	if (setgid(pw->pw_gid) < 0)
 	    err(1, "setgid(%s) failed", runas_string);
-	
+
 	if (setuid(pw->pw_uid) < 0)
 	    err(1, "setuid(%s)", runas_string);
 #else
@@ -112,6 +108,7 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_context context;
     krb5_kdc_configuration *config;
+    int optidx = 0;
 
     setprogname(argv[0]);
 
@@ -125,7 +122,7 @@ main(int argc, char **argv)
     if (ret)
 	errx (1, "krb5_kt_register(HDB) failed: %d", ret);
 
-    config = configure(context, argc, argv);
+    config = configure(context, argc, argv, &optidx);
 
 #ifdef HAVE_SIGACTION
     {

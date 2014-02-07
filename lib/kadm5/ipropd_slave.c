@@ -38,7 +38,8 @@ RCSID("$Id$");
 static const char *config_name = "ipropd-slave";
 
 static krb5_log_facility *log_facility;
-static char *server_time_lost = "5 min";
+static char five_min[] = "5 min";
+static char *server_time_lost = five_min;
 static int time_before_lost;
 const char *slave_str = NULL;
 
@@ -62,14 +63,14 @@ connect_to_master (krb5_context context, const char *master,
 
     error = getaddrinfo (master, port_str, &hints, &ai);
     if (error) {
-	krb5_warnx(context, "Failed to get address of to %s: %s", 
+	krb5_warnx(context, "Failed to get address of to %s: %s",
 		   master, gai_strerror(error));
 	return -1;
     }
 
     for (a = ai; a != NULL; a = a->ai_next) {
 	char node[NI_MAXHOST];
-	error = getnameinfo(a->ai_addr, a->ai_addrlen, 
+	error = getnameinfo(a->ai_addr, a->ai_addrlen,
 			    node, sizeof(node), NULL, 0, NI_NUMERICHOST);
 	if (error)
 	    strlcpy(node, "[unknown-addr]", sizeof(node));
@@ -106,6 +107,7 @@ get_creds(krb5_context context, const char *keytab_str,
     krb5_creds creds;
     char *server;
     char keytab_buf[256];
+    int aret;
 
     if (keytab_str == NULL) {
 	ret = krb5_kt_default_name (context, keytab_buf, sizeof(keytab_buf));
@@ -126,8 +128,8 @@ get_creds(krb5_context context, const char *keytab_str,
     ret = krb5_get_init_creds_opt_alloc(context, &init_opts);
     if (ret) krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
-    asprintf (&server, "%s/%s", IPROP_NAME, serverhost);
-    if (server == NULL)
+    aret = asprintf (&server, "%s/%s", IPROP_NAME, serverhost);
+    if (aret == -1 || server == NULL)
 	krb5_errx (context, 1, "malloc: no memory");
 
     ret = krb5_get_init_creds_keytab(context, &creds, client, keytab,
@@ -190,17 +192,15 @@ receive_loop (krb5_context context,
      */
     do {
 	int32_t len, timestamp, tmp;
-	enum kadm_ops op;
 
 	if(krb5_ret_int32 (sp, &vers) != 0)
 	    return;
 	krb5_ret_int32 (sp, &timestamp);
 	krb5_ret_int32 (sp, &tmp);
-	op = tmp;
 	krb5_ret_int32 (sp, &len);
-	if (vers <= server_context->log_context.version)
+	if ((uint32_t)vers <= server_context->log_context.version)
 	    krb5_storage_seek(sp, len + 8, SEEK_CUR);
-    } while(vers <= server_context->log_context.version);
+    } while((uint32_t)vers <= server_context->log_context.version);
 
     /*
      * Read up rest of the entires into the memory...
@@ -338,6 +338,27 @@ send_im_here (krb5_context context, int fd,
 	krb5_err (context, 1, ret, "krb5_write_priv_message");
 }
 
+static void
+reinit_log(krb5_context context,
+	   kadm5_server_context *server_context,
+	   int32_t vno)
+{
+    krb5_error_code ret;
+
+    ret = kadm5_log_reinit (server_context);
+    if (ret)
+	krb5_err(context, 1, ret, "kadm5_log_reinit");
+
+    ret = kadm5_log_set_version (server_context, vno - 1);
+    if (ret)
+	krb5_err (context, 1, ret, "kadm5_log_set_version");
+
+    ret = kadm5_log_nop (server_context);
+    if (ret)
+	krb5_err (context, 1, ret, "kadm5_log_nop");
+}
+
+
 static krb5_error_code
 receive_everything (krb5_context context, int fd,
 		    kadm5_server_context *server_context,
@@ -354,7 +375,9 @@ receive_everything (krb5_context context, int fd,
 
     krb5_warnx(context, "receive complete database");
 
-    asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
+    ret = asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
+    if (ret == -1)
+	krb5_err(context, 1, ENOMEM, "asprintf");
     ret = hdb_create(context, &mydb, dbname);
     if(ret)
 	krb5_err(context,1, ret, "hdb_create");
@@ -418,17 +441,7 @@ receive_everything (krb5_context context, int fd,
     krb5_ret_int32 (sp, &vno);
     krb5_storage_free(sp);
 
-    ret = kadm5_log_reinit (server_context);
-    if (ret)
-	krb5_err(context, 1, ret, "kadm5_log_reinit");
-
-    ret = kadm5_log_set_version (server_context, vno - 1);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_set_version");
-
-    ret = kadm5_log_nop (server_context);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_nop");
+    reinit_log(context, server_context, vno);
 
     ret = mydb->hdb_rename (context, mydb, server_context->db->hdb_name);
     if (ret)
@@ -449,6 +462,51 @@ receive_everything (krb5_context context, int fd,
     return ret;
 }
 
+static void
+slave_status(krb5_context context,
+	     const char *file,
+	     const char *status, ...)
+     __attribute__ ((format (printf, 3, 4)));
+
+
+static void
+slave_status(krb5_context context,
+	     const char *file,
+	     const char *fmt, ...)
+{
+    char *status = NULL;
+    va_list args;
+    int len;
+    
+    va_start(args, fmt);
+    len = vasprintf(&status, fmt, args);
+    va_end(args);
+    if (len < 0 || status == NULL) {
+	unlink(file);
+	return;
+    }
+    krb5_warnx(context, "slave status change: %s", status);
+    
+    rk_dumpdata(file, status, len);
+    free(status);
+}
+
+static void
+is_up_to_date(krb5_context context, const char *file,
+	      kadm5_server_context *server_context)
+{
+    krb5_error_code ret;
+    char buf[80];
+    ret = krb5_format_time(context, time(NULL), buf, sizeof(buf), 1);
+    if (ret) {
+	unlink(file);
+	return;
+    }
+    slave_status(context, file, "up-to-date with version: %lu at %s\n",
+		 (unsigned long)server_context->log_context.version, buf);
+}
+
+static char *status_file;
 static char *config_file;
 static char *realm;
 static int version_flag;
@@ -460,22 +518,24 @@ static int detach_from_console = 0;
 #endif
 
 static struct getargs args[] = {
-    { "config-file", 'c', arg_string, &config_file },
-    { "realm", 'r', arg_string, &realm },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
+    { "realm", 'r', arg_string, &realm, NULL, NULL },
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication from", "kspec" },
     { "time-lost", 0, arg_string, &server_time_lost,
       "time before server is considered lost", "time" },
+    { "status-file", 0, arg_string, &status_file,
+      "file to write out status into", "file" },
     { "port", 0, arg_string, &port_str,
       "port ipropd-slave will connect to", "port"},
 #ifdef SUPPORT_DETACH
     { "detach", 0, arg_flag, &detach_from_console,
-      "detach from console" },
+      "detach from console", NULL },
 #endif
-    { "hostname", 0, arg_string, &slave_str,
+    { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -506,6 +566,7 @@ main(int argc, char **argv)
     time_t reconnect_max;
     time_t reconnect;
     time_t before = 0;
+    int aret;
 
     const char *master;
 
@@ -528,8 +589,8 @@ main(int argc, char **argv)
     setup_signal();
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	if (asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context)) == -1
+	    || config_file == NULL)
 	    errx(1, "out of memory");
     }
 
@@ -550,9 +611,21 @@ main(int argc, char **argv)
 
     master = argv[0];
 
+    if (status_file == NULL) {
+	if (asprintf(&status_file,  "%s/ipropd-slave-status", hdb_db_dir(context)) < 0 || status_file == NULL)
+	    krb5_errx(context, 1, "can't allocate status file buffer"); 
+    }
+
+    slave_status(context, status_file, "bootstrapping\n");
+
 #ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
+    if (detach_from_console){
+	aret = daemon(0, 0);
+	if (aret == -1) {
+	    /* not much to do if detaching fails... */
+	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
+	}
+    }
 #endif
     pidfile (NULL);
     krb5_openlog (context, "ipropd-slave", &log_facility);
@@ -565,6 +638,8 @@ main(int argc, char **argv)
     time_before_lost = parse_time (server_time_lost,  "s");
     if (time_before_lost < 0)
 	krb5_errx (context, 1, "couldn't parse time: %s", server_time_lost);
+
+    slave_status(context, status_file, "getting credentials from keytab/database\n");
 
     memset(&conf, 0, sizeof(conf));
     if(realm) {
@@ -581,6 +656,8 @@ main(int argc, char **argv)
 	krb5_err (context, 1, ret, "kadm5_init_with_password_ctx");
 
     server_context = (kadm5_server_context *)kadm_handle;
+
+    slave_status(context, status_file, "creating log file\n");
 
     ret = kadm5_log_init (server_context);
     if (ret)
@@ -619,6 +696,8 @@ main(int argc, char **argv)
 	}
 	before = now;
 
+	slave_status(context, status_file, "connecting to master: %s\n", master);
+
 	master_fd = connect_to_master (context, master, port_str);
 	if (master_fd < 0)
 	    goto retry;
@@ -649,6 +728,8 @@ main(int argc, char **argv)
 	    goto retry;
 
 	connected = TRUE;
+
+	slave_status(context, status_file, "connected to master, waiting instructions\n");
 
 	while (connected && !exit_flag) {
 	    krb5_data out;
@@ -694,17 +775,27 @@ main(int argc, char **argv)
 		receive (context, sp, server_context);
 		ret = ihave (context, auth_context, master_fd,
 			     server_context->log_context.version);
-		if (ret)
+		if (ret) {
 		    connected = FALSE;
+		} else {
+		    is_up_to_date(context, status_file, server_context);
+		}		
+
 		break;
 	    case TELL_YOU_EVERYTHING :
 		ret = receive_everything (context, master_fd, server_context,
 					  auth_context);
 		if (ret)
 		    connected = FALSE;
+		else
+		    is_up_to_date(context, status_file, server_context);
 		break;
 	    case ARE_YOU_THERE :
+		is_up_to_date(context, status_file, server_context);
 		send_im_here (context, master_fd, auth_context);
+		break;
+	    case YOU_HAVE_LAST_VERSION:
+		is_up_to_date(context, status_file, server_context);
 		break;
 	    case NOW_YOU_HAVE :
 	    case I_HAVE :
@@ -718,9 +809,12 @@ main(int argc, char **argv)
 	    krb5_data_free (&out);
 
 	}
+
+	slave_status(context, status_file, "disconnected from master");
     retry:
 	if (connected == FALSE)
 	    krb5_warnx (context, "disconnected for server");
+
 	if (exit_flag)
 	    krb5_warnx (context, "got an exit signal");
 
@@ -728,9 +822,14 @@ main(int argc, char **argv)
 	    close(master_fd);
 
 	reconnect += backoff;
-	if (reconnect > reconnect_max)
+	if (reconnect > reconnect_max) {
+	    slave_status(context, status_file, "disconnected from master for a long time");
 	    reconnect = reconnect_max;
+	}
     }
+
+    if (status_file)
+	unlink(status_file);
 
     if (0);
 #ifndef NO_SIGXCPU
@@ -742,6 +841,6 @@ main(int argc, char **argv)
     else
 	krb5_warnx(context, "%s unexpected exit reason: %ld",
 		       getprogname(), (long)exit_flag);
-    
+
     return 0;
 }

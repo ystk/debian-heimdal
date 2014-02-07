@@ -42,12 +42,15 @@ char *kcm_ccache_nextid(pid_t pid, uid_t uid, gid_t gid)
 {
     unsigned n;
     char *name;
+    int ret;
 
     HEIMDAL_MUTEX_lock(&ccache_mutex);
     n = ++ccache_nextid;
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
 
-    asprintf(&name, "%ld:%u", (long)uid, n);
+    ret = asprintf(&name, "%ld:%u", (long)uid, n);
+    if (ret == -1)
+	return NULL;
 
     return name;
 }
@@ -168,7 +171,7 @@ krb5_error_code kcm_debug_ccache(krb5_context context)
 	    krb5_unparse_name(context, p->client, &cpn);
 	if (p->server != NULL)
 	    krb5_unparse_name(context, p->server, &spn);
-	
+
 	kcm_log(7, "cache %08x: name %s refcnt %d flags %04x mode %04o "
 		"uid %d gid %d client %s server %s ncreds %d",
 		p, p->name, p->refcnt, p->flags, p->mode, p->uid, p->gid,
@@ -428,6 +431,8 @@ kcm_release_ccache(krb5_context context, kcm_ccache c)
 
     HEIMDAL_MUTEX_lock(&c->mutex);
     if (c->refcnt == 1) {
+	kcm_free_ccache_data_internal(context, c);
+	free(c);
     } else {
 	c->refcnt--;
 	HEIMDAL_MUTEX_unlock(&c->mutex);

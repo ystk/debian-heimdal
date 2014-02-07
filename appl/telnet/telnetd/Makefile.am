@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += $(WFLAGS_LITE)
+
 AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_hcrypto)
 
 libexec_PROGRAMS = telnetd
@@ -24,4 +26,4 @@ LDADD = \
 	$(LIB_kdfs) \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

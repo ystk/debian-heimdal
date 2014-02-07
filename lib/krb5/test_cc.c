@@ -67,7 +67,7 @@ test_default_name(krb5_context context)
 
     if (strcmp(p1, p2) != 0)
 	krb5_errx (context, 1, "krb5_cc_default_name no longer same");
-	
+
     ret = krb5_cc_set_default_name(context, test_cc_name);
     if (p == NULL)
 	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
@@ -174,13 +174,13 @@ test_init_vs_destroy(krb5_context context, const char *type)
 
     ret = krb5_cc_new_unique(context, type, NULL, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", type);
 
     if (asprintf(&n, "%s:%s",
 		 krb5_cc_get_type(context, id),
 		 krb5_cc_get_name(context, id)) < 0 || n == NULL)
 	errx(1, "malloc");
-	
+
 
     ret = krb5_cc_resolve(context, n, &id2);
     free(n);
@@ -216,7 +216,7 @@ test_cache_remove(krb5_context context, const char *type)
 
     ret = krb5_cc_new_unique(context, type, NULL, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_gen_new");
+	krb5_err(context, 1, ret, "krb5_cc_gen_new: %s", type);
 
     ret = krb5_cc_initialize(context, id, p);
     if (ret)
@@ -293,31 +293,31 @@ struct {
 } cc_names[] = {
     { "foo", 0, "foo" },
     { "foo%}", 0, "foo%}" },
-    { "%{uid}", 0 },
+    { "%{uid}", 0, NULL },
     { "foo%{null}", 0, "foo" },
     { "foo%{null}bar", 0, "foobar" },
-    { "%{", 1 },
-    { "%{foo %{", 1 },
-    { "%{{", 1 },
-    { "%{{}", 1 },
-    { "%{nulll}", 1 },
-    { "%{does not exist}", 1 },
-    { "%{}", 1 },
+    { "%{", 1, NULL },
+    { "%{foo %{", 1, NULL },
+    { "%{{", 1, NULL },
+    { "%{{}", 1, NULL },
+    { "%{nulll}", 1, NULL },
+    { "%{does not exist}", 1, NULL },
+    { "%{}", 1, NULL },
 #ifdef KRB5_USE_PATH_TOKENS
-    { "%{APPDATA}", 0 },
-    { "%{COMMON_APPDATA}", 0},
-    { "%{LOCAL_APPDATA}", 0},
-    { "%{SYSTEM}", 0},
-    { "%{WINDOWS}", 0},
-    { "%{TEMP}", 0},
-    { "%{USERID}", 0},
-    { "%{uid}", 0},
-    { "%{USERCONFIG}", 0},
-    { "%{COMMONCONFIG}", 0},
-    { "%{LIBDIR}", 0},
-    { "%{BINDIR}", 0},
-    { "%{LIBEXEC}", 0},
-    { "%{SBINDIR}", 0},
+    { "%{APPDATA}", 0, NULL },
+    { "%{COMMON_APPDATA}", 0, NULL},
+    { "%{LOCAL_APPDATA}", 0, NULL},
+    { "%{SYSTEM}", 0, NULL},
+    { "%{WINDOWS}", 0, NULL},
+    { "%{TEMP}", 0, NULL},
+    { "%{USERID}", 0, NULL},
+    { "%{uid}", 0, NULL},
+    { "%{USERCONFIG}", 0, NULL},
+    { "%{COMMONCONFIG}", 0, NULL},
+    { "%{LIBDIR}", 0, NULL},
+    { "%{BINDIR}", 0, NULL},
+    { "%{LIBEXEC}", 0, NULL},
+    { "%{SBINDIR}", 0, NULL},
 #endif
 };
 
@@ -458,7 +458,7 @@ test_copy(krb5_context context, const char *from, const char *to)
 
     ret = krb5_cc_new_unique(context, from, NULL, &fromid);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", from);
 
     ret = krb5_cc_initialize(context, fromid, p);
     if (ret)
@@ -466,7 +466,7 @@ test_copy(krb5_context context, const char *from, const char *to)
 
     ret = krb5_cc_new_unique(context, to, NULL, &toid);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_gen_new");
+	krb5_err(context, 1, ret, "krb5_cc_gen_new: %s", to);
 
     ret = krb5_cc_copy_cache(context, fromid, toid);
     if (ret)
@@ -502,7 +502,7 @@ test_move(krb5_context context, const char *type)
     if (ret == KRB5_CC_NOSUPP)
 	return;
     else if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", type);
 
     ret = krb5_parse_name(context, "lha@SU.SE", &p);
     if (ret)

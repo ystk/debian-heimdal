@@ -81,6 +81,7 @@ static void
 check_rsa(const unsigned char *in, size_t len, RSA *rsa, int padding)
 {
     unsigned char *res, *res2;
+    unsigned int len2;
     int keylen;
 
     res = malloc(RSA_size(rsa));
@@ -129,6 +130,14 @@ check_rsa(const unsigned char *in, size_t len, RSA *rsa, int padding)
     if (memcmp(res2, in, len) != 0)
 	errx(1, "string not the same after decryption");
 
+    len2 = keylen;
+
+    if (RSA_sign(NID_sha1, in, len, res, &len2, rsa) != 1)
+	errx(1, "RSA_sign failed");
+
+    if (RSA_verify(NID_sha1, in, len, res, len2, rsa) != 1)
+	errx(1, "RSA_verify failed");
+
     free(res);
     free(res2);
 }
@@ -148,7 +157,7 @@ read_key(ENGINE *engine, const char *rsa_key)
     RSA *rsa;
     FILE *f;
 
-    f = fopen(rsa_key, "r");
+    f = fopen(rsa_key, "rb");
     if (f == NULL)
 	err(1, "could not open file %s", rsa_key);
     rk_cloexec_file(f);
@@ -325,13 +334,13 @@ main(int argc, char **argv)
 		0x6d, 0x33, 0xf9, 0x40, 0x75, 0x5b, 0x4e, 0xc5, 0x90, 0x35,
 		0x48, 0xab, 0x75, 0x02, 0x09, 0x76, 0x9a, 0xb4, 0x7d, 0x6b
 	    };
-	
+
 	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
 	}
-	
+
 	for (i = 0; i < 128; i++) {
 	    unsigned char sha1[20];
-	
+
 	    RAND_bytes(sha1, sizeof(sha1));
 	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
 	}
@@ -362,9 +371,9 @@ main(int argc, char **argv)
 
 	e = BN_new();
 	BN_set_word(e, 0x10001);
-	
+
 	BN_GENCB_set(&cb, cb_func, NULL);
-	
+
 	RAND_bytes(&n, sizeof(n));
 	n &= 0x1ff;
 	n += 1024;
@@ -373,7 +382,7 @@ main(int argc, char **argv)
 	    errx(1, "RSA_generate_key_ex");
 
 	BN_free(e);
-	
+
 	for (j = 0; j < 8; j++) {
 	    unsigned char sha1[20];
 	    RAND_bytes(sha1, sizeof(sha1));

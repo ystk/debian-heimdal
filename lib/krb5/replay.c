@@ -205,6 +205,7 @@ krb5_rc_store(krb5_context context,
     time_t t;
     FILE *f;
     int ret;
+    size_t count;
 
     ent.stamp = time(NULL);
     checksum_authenticator(rep, ent.data);
@@ -217,7 +218,9 @@ krb5_rc_store(krb5_context context,
 	return ret;
     }
     rk_cloexec_file(f);
-    fread(&tmp, sizeof(ent), 1, f);
+    count = fread(&tmp, sizeof(ent), 1, f);
+    if(count != 1)
+	return KRB5_RC_IO_UNKNOWN;
     t = ent.stamp - tmp.stamp;
     while(fread(&tmp, sizeof(ent), 1, f)){
 	if(tmp.stamp < t)
@@ -282,14 +285,14 @@ krb5_rc_get_name(krb5_context context,
 {
     return id->name;
 }
-		
+
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_rc_get_type(krb5_context context,
 		 krb5_rcache id)
 {
     return "FILE";
 }
-		
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_server_rcache(krb5_context context,
 		       const krb5_data *piece,

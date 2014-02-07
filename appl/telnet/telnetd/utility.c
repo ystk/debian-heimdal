@@ -87,7 +87,7 @@ ttloop(void)
 int
 stilloob(int s)
 {
-    static struct timeval timeout = { 0 };
+    static struct timeval timeout = { 0, 0 };
     fd_set	excepts;
     int value;
 
@@ -922,28 +922,28 @@ printsub(int direction, unsigned char *pointer, size_t length)
 			output_data("VAR ");
 			quote = 0;
 			break;
-			
+
 		    case NEW_ENV_VALUE:
 			if (quote)
 			    output_data("\" ");
 			output_data("VALUE ");
 			quote = 0;
 			break;
-			
+
 		    case ENV_ESC:
 			if (quote)
 			    output_data("\" ");
 			output_data("ESC ");
 			quote = 0;
 			break;
-			
+
 		    case ENV_USERVAR:
 			if (quote)
 			    output_data("\" ");
 			output_data("USERVAR ");
 			quote = 0;
 			break;
-			
+
 		    default:
 			if (isprint(pointer[i]) && pointer[i] != '"') {
 			    if (!quote) {

@@ -182,7 +182,7 @@ status_output (int debugp)
 	printf ("%u\t%s\t%s\n", (unsigned)getpid(), display, xauthfile);
     else {
 	pid_t pid;
-	
+
 	pid = fork();
 	if (pid < 0) {
 	    err(1, "fork");
@@ -279,7 +279,7 @@ doit_passive (kx_context *kc)
 	     p++;
 	     p += kx_get_int (p, &tmp, 4, 0);
 	 }
-	
+
 	 ++nchild;
 	 child = fork ();
 	 if (child < 0) {
@@ -292,7 +292,7 @@ doit_passive (kx_context *kc)
 	     close (otherside);
 
 	     socket_set_port(kc->thataddr, htons(tmp));
-		
+
 	     fd = socket (kc->thataddr->sa_family, SOCK_STREAM, 0);
 	     if (fd < 0)
 		 err(1, "socket");
@@ -616,13 +616,13 @@ struct getargs args[] = {
     { "user",	'l', arg_string,	&user,		"Run as this user",
       NULL },
     { "tcp",	't', arg_flag,		&tcp_flag,
-      "Use a TCP connection for X11" },
+      "Use a TCP connection for X11", NULL },
     { "passive", 'P', arg_flag,		&passive_flag,
-      "Force a passive connection" },
+      "Force a passive connection", NULL },
     { "keepalive", 'k', arg_negative_flag, &keepalive_flag,
-      "disable keep-alives" },
+      "disable keep-alives", NULL },
     { "debug",	'd',	arg_flag,	&debug_flag,
-      "Enable debug information" },
+      "Enable debug information", NULL },
     { "version", 0,  arg_flag,		&version_flag,	"Print version",
       NULL },
     { "help",	 0,  arg_flag,		&help_flag,	NULL,

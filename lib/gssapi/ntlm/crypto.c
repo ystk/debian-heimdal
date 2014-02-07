@@ -260,7 +260,8 @@ v2_unseal_message(gss_buffer_t in,
  *
  */
 
-OM_uint32 _gss_ntlm_get_mic
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_get_mic
            (OM_uint32 * minor_status,
             const gss_ctx_id_t context_handle,
             gss_qop_t qop_req,
@@ -334,7 +335,7 @@ OM_uint32 _gss_ntlm_get_mic
  *
  */
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_verify_mic
            (OM_uint32 * minor_status,
             const gss_ctx_id_t context_handle,
@@ -420,7 +421,7 @@ _gss_ntlm_verify_mic
  *
  */
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_wrap_size_limit (
             OM_uint32 * minor_status,
             const gss_ctx_id_t context_handle,
@@ -451,7 +452,8 @@ _gss_ntlm_wrap_size_limit (
  *
  */
 
-OM_uint32 _gss_ntlm_wrap
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_wrap
 (OM_uint32 * minor_status,
  const gss_ctx_id_t context_handle,
  int conf_req_flag,
@@ -493,7 +495,7 @@ OM_uint32 _gss_ntlm_wrap
 
 	RC4(&ctx->u.v1.crypto_send.key, input_message_buffer->length,
 	    input_message_buffer->value, output_message_buffer->value);
-	
+
 	ret = _gss_ntlm_get_mic(minor_status, context_handle,
 				0, input_message_buffer,
 				&trailer);
@@ -521,7 +523,8 @@ OM_uint32 _gss_ntlm_wrap
  *
  */
 
-OM_uint32 _gss_ntlm_unwrap
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_unwrap
            (OM_uint32 * minor_status,
             const gss_ctx_id_t context_handle,
             const gss_buffer_t input_message_buffer,
@@ -564,10 +567,10 @@ OM_uint32 _gss_ntlm_unwrap
 	    output_message_buffer->length = 0;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	RC4(&ctx->u.v1.crypto_recv.key, output_message_buffer->length,
 	    input_message_buffer->value, output_message_buffer->value);
-	
+
 	trailer.value = ((unsigned char *)input_message_buffer->value) +
 	    output_message_buffer->length;
 	trailer.length = 16;

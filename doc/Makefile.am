@@ -24,6 +24,11 @@ hdb.dxy: hdb.din Makefile
 	chmod +x hdb.dxy.tmp
 	mv hdb.dxy.tmp hdb.dxy
 
+base.dxy: base.din Makefile
+	$(dxy_subst) < $(srcdir)/base.din > base.dxy.tmp
+	chmod +x base.dxy.tmp
+	mv base.dxy.tmp base.dxy
+
 hx509.dxy: hx509.din Makefile
 	$(dxy_subst) < $(srcdir)/hx509.din > hx509.dxy.tmp
 	chmod +x hx509.dxy.tmp
@@ -57,9 +62,13 @@ vars.texi: vars.tin Makefile
 	chmod +x vars.texi.tmp
 	mv vars.texi.tmp vars.texi
 
-PROJECTS = hcrypto hdb hx509 gssapi krb5 ntlm wind 
+PROJECTS = base hdb hx509 gssapi krb5 ntlm wind 
 
-doxyout doxygen: hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
+if !HAVE_OPENSSL
+PROJECTS += hcrypto
+endif
+
+doxyout doxygen: base.dxy hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
 	@find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \
 	rm -rf $(srcdir)/doxyout ; \
 	mkdir $(srcdir)/doxyout ; \
@@ -115,6 +124,7 @@ heimdal_TEXINFOS = \
 	win2k.texi
 
 EXTRA_DIST = \
+	NTMakefile \
 	doxyout \
 	footer.html \
 	gssapi.din \
@@ -122,6 +132,7 @@ EXTRA_DIST = \
 	hcrypto.din \
 	header.html \
 	heimdal.css \
+	base.din \
 	hx509.din \
 	krb5.din \
 	ntlm.din \
@@ -134,6 +145,7 @@ EXTRA_DIST = \
 
 CLEANFILES = \
 	hcrypto.dxy* \
+	base.dxy* \
 	hx509.dxy* \
 	hdb.dxy* \
 	gssapi.dxy* \

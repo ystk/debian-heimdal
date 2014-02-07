@@ -21,11 +21,13 @@ krb5_verify_password (POP *p)
     krb5_error_code ret;
     krb5_principal client, server;
     krb5_creds creds;
+    const char *estr;
 
     ret = krb5_get_init_creds_opt_alloc (p->context, &get_options);
     if (ret) {
-	pop_log(p, POP_PRIORITY, "krb5_get_init_creds_opt_alloc: %s",
-		krb5_get_err_text (p->context, ret));
+	estr = krb5_get_error_message(p->context, ret);
+	pop_log(p, POP_PRIORITY, "krb5_get_init_creds_opt_alloc: %s", estr);
+	krb5_free_error_message(p->context, estr);
 	return 1;
     }
 
@@ -38,8 +40,9 @@ krb5_verify_password (POP *p)
     ret = krb5_parse_name (p->context, p->user, &client);
     if (ret) {
 	krb5_get_init_creds_opt_free(p->context, get_options);
-	pop_log(p, POP_PRIORITY, "krb5_parse_name: %s",
-		krb5_get_err_text (p->context, ret));
+	estr = krb5_get_error_message(p->context, ret);
+	pop_log(p, POP_PRIORITY, "krb5_parse_name: %s", estr);
+	krb5_free_error_message(p->context, estr);
 	return 1;
     }
 
@@ -54,9 +57,9 @@ krb5_verify_password (POP *p)
 					get_options);
     krb5_get_init_creds_opt_free(p->context, get_options);
     if (ret) {
-	pop_log(p, POP_PRIORITY,
-		"krb5_get_init_creds_password: %s",
-		krb5_get_err_text (p->context, ret));
+	estr = krb5_get_error_message(p->context, ret);
+	pop_log(p, POP_PRIORITY, "krb5_get_init_creds_password: %s", estr);
+	krb5_free_error_message(p->context, estr);
 	return 1;
     }
 
@@ -66,9 +69,9 @@ krb5_verify_password (POP *p)
 				   KRB5_NT_SRV_HST,
 				   &server);
     if (ret) {
-	pop_log(p, POP_PRIORITY,
-		"krb5_get_init_creds_password: %s",
-		krb5_get_err_text (p->context, ret));
+	estr = krb5_get_error_message(p->context, ret);
+	pop_log(p, POP_PRIORITY, "krb5_get_init_creds_password: %s", estr);
+	krb5_free_error_message(p->context, estr);
 	return 1;
     }
 
@@ -109,7 +112,7 @@ login_user(POP *p)
 	/*  Make a temporary copy of the user's maildrop */
 	/*    and set the group and user id */
 	if (pop_dropcopy(p, pw) != POP_SUCCESS) return (POP_FAILURE);
-	
+
 	/*  Get information about the maildrop */
 	if (pop_dropinfo(p) != POP_SUCCESS) return(POP_FAILURE);
     } else {
@@ -143,7 +146,7 @@ pop_pass (POP *p)
 #ifdef KRB5
 	if (p->version == 5) {
 	    char *name;
-	
+
 	    if (!krb5_kuserok (p->context, p->principal, p->user)) {
 		pop_log (p, POP_PRIORITY,
 			 "krb5 permission denied");

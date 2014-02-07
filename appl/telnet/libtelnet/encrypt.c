@@ -108,7 +108,7 @@ static long i_support_encrypt = typemask(ENCTYPE_DES_CFB64)
      static Encryptions encryptions[] = {
 #if	defined(DES_ENCRYPTION)
 	 { "DES_CFB64",	ENCTYPE_DES_CFB64,
-	   cfb64_encrypt,	
+	   cfb64_encrypt,
 	   cfb64_decrypt,
 	   cfb64_init,
 	   cfb64_start,
@@ -118,7 +118,7 @@ static long i_support_encrypt = typemask(ENCTYPE_DES_CFB64)
 	   cfb64_keyid,
 	   cfb64_printsub },
 	 { "DES_OFB64",	ENCTYPE_DES_OFB64,
-	   ofb64_encrypt,	
+	   ofb64_encrypt,
 	   ofb64_decrypt,
 	   ofb64_init,
 	   ofb64_start,
@@ -128,7 +128,7 @@ static long i_support_encrypt = typemask(ENCTYPE_DES_CFB64)
 	   ofb64_keyid,
 	   ofb64_printsub },
 #endif
-	 { 0, },
+	 { 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
      };
 
 static unsigned char str_send[64] = { IAC, SB, TELOPT_ENCRYPT,
@@ -388,7 +388,7 @@ encrypt_display(void)
 	       ENCTYPE_NAME(encrypt_mode));
     else
 	printf("Currently not encrypting output\r\n");
-	
+
     if (decrypt_input)
 	printf("Currently decrypting input with %s\r\n",
 	       ENCTYPE_NAME(decrypt_mode));
@@ -411,7 +411,7 @@ EncryptStatus(void)
 	       ENCTYPE_NAME(encrypt_mode));
     } else
 	printf("Currently not encrypting output\r\n");
-	
+
     if (decrypt_input) {
 	printf("Currently decrypting input with %s\r\n",
 	       ENCTYPE_NAME(decrypt_mode));
@@ -735,6 +735,9 @@ encrypt_keyid(struct key_info *kp, unsigned char *keyid, int len)
     Encryptions *ep;
     int dir = kp->dir;
     int ret = 0;
+
+    if (len > MAXKEYLEN)
+	len = MAXKEYLEN;
 
     if (!(ep = (*kp->getcrypt)(*kp->modep))) {
 	if (len == 0)

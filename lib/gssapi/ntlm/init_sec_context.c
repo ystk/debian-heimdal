@@ -36,7 +36,7 @@
 static int
 from_file(const char *fn, const char *target_domain,
 	  char **username, struct ntlm_buf *key)
-{	
+{
     char *str, buf[1024];
     FILE *f;
 
@@ -103,6 +103,7 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
     krb5_error_code ret;
     char *confname;
     krb5_data data;
+    int aret;
 
     *username = NULL;
     krb5_data_zero(&data);
@@ -128,8 +129,8 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
     if (ret)
 	goto out;
 
-    asprintf(&confname, "ntlm-key-%s", name->domain);
-    if (confname == NULL) {
+    aret = asprintf(&confname, "ntlm-key-%s", name->domain);
+    if (aret == -1) {
 	krb5_clear_error_message(context);
 	ret = ENOMEM;
 	goto out;
@@ -186,7 +187,7 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
 static int
 _gss_copy_cred(ntlm_cred from, ntlm_cred *to)
 {
-    *to = calloc(1, sizeof(*to));
+    *to = calloc(1, sizeof(**to));
     if (*to == NULL)
 	return ENOMEM;
     (*to)->username = strdup(from->username);
@@ -213,7 +214,7 @@ _gss_copy_cred(ntlm_cred from, ntlm_cred *to)
     return 0;
 }
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_init_sec_context
            (OM_uint32 * minor_status,
             const gss_cred_id_t initiator_cred_handle,
@@ -247,7 +248,7 @@ _gss_ntlm_init_sec_context
 	struct ntlm_buf data;
 	uint32_t flags = 0;
 	int ret;
-	
+
 	ctx = calloc(1, sizeof(*ctx));
 	if (ctx == NULL) {
 	    *minor_status = EINVAL;
@@ -280,23 +281,23 @@ _gss_ntlm_init_sec_context
 	flags |= NTLM_NEG_KEYEX;
 
 	memset(&type1, 0, sizeof(type1));
-	
+
 	type1.flags = flags;
 	type1.domain = name->domain;
 	type1.hostname = NULL;
 	type1.os[0] = 0;
 	type1.os[1] = 0;
-	
+
 	ret = heim_ntlm_encode_type1(&type1, &data);
 	if (ret) {
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	output_token->value = data.data;
 	output_token->length = data.length;
-	
+
 	return GSS_S_CONTINUE_NEEDED;
     } else {
 	krb5_error_code ret;
@@ -346,14 +347,14 @@ _gss_ntlm_init_sec_context
 		}
 
 		ret = heim_ntlm_calculate_ntlm2_sess(nonce,
-						     type2.challange,
+						     type2.challenge,
 						     ctx->client->key.data,
 						     &type3.lm,
 						     &type3.ntlm);
 	    } else {
 		ret = heim_ntlm_calculate_ntlm1(ctx->client->key.data,
 						ctx->client->key.length,
-						type2.challange,
+						type2.challenge,
 						&type3.ntlm);
 
 	    }
@@ -397,7 +398,7 @@ _gss_ntlm_init_sec_context
 	    struct ntlm_targetinfo ti;
 
 	    /* verify infotarget */
-	
+
 	    ret = heim_ntlm_decode_targetinfo(&type2.targetinfo, 1, &ti);
 	    if(ret) {
 		_gss_ntlm_delete_sec_context(minor_status,
@@ -417,7 +418,7 @@ _gss_ntlm_init_sec_context
 					    ctx->client->key.length,
 					    ctx->client->username,
 					    name->domain,
-					    type2.challange,
+					    type2.challenge,
 					    &type2.targetinfo,
 					    ntlmv2,
 					    &type3.ntlm);
@@ -438,7 +439,7 @@ _gss_ntlm_init_sec_context
 		*minor_status = ret;
 		return GSS_S_FAILURE;
 	    }
-	
+
 	    ctx->flags |= NTLM_NEG_NTLM2_SESSION;
 
 	    ret = krb5_data_copy(&ctx->sessionkey,
@@ -469,7 +470,7 @@ _gss_ntlm_init_sec_context
 			ctx->sessionkey.length,
 			ctx->sessionkey.data);
 	}
-	
+
 
 
 	ret = heim_ntlm_encode_type3(&type3, &data);

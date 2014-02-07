@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -40,6 +42,7 @@ RCSID("$Id$");
 #include <stdlib.h>
 #include <ctype.h>
 #ifdef WIN32
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
 
@@ -163,6 +166,7 @@ int main(int argc, char **argv)
 #ifndef WIN32
     fprintf(f, "#include <sys/socket.h>\n");
 #else
+    fprintf(f, "#include <winsock2.h>\n");
     fprintf(f, "#include <ws2tcpip.h>\n");
 #endif
 #endif
@@ -250,6 +254,41 @@ int main(int argc, char **argv)
     fprintf(f, "\n");
 
 #endif /* KRB5 */
+
+    fprintf(f, "#ifndef HEIMDAL_DEPRECATED\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_DEPRECATED __attribute__((deprecated))\n");
+    fprintf(f, "#elif defined(_MSC_VER) && (_MSC_VER>1200)\n");
+    fprintf(f, "#define HEIMDAL_DEPRECATED __declspec(deprecated)\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_DEPRECATED\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_PRINTF_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__((format x))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x)\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_NORETURN_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__((noreturn))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_UNUSED_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__((unused))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
     fprintf(f, "#endif /* %s */\n", hb);
 
     if (f != stdout)

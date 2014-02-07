@@ -73,10 +73,13 @@ logmessage(struct client *c, const char *file, unsigned int lineno,
     char *message;
     va_list ap;
     int32_t ackid;
+    int ret;
 
     va_start(ap, fmt);
-    vasprintf(&message, fmt, ap);
+    ret = vasprintf(&message, fmt, ap);
     va_end(ap);
+    if (ret == -1)
+	errx(1, "out of memory");
 
     if (logfile)
 	fprintf(logfile, "%s:%u: %d %s\n", file, lineno, level, message);
@@ -229,7 +232,7 @@ acquire_cred(struct client *c,
 		   "krb5_get_init_creds failed: %d", ret);
 	return convert_krb5_to_gsm(ret);
     }
-	
+
     ret = krb5_cc_new_unique(context, "MEMORY", NULL, &id);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_initialize");
@@ -358,7 +361,7 @@ HandleOP(InitContext)
 	if (ctx)
 	    krb5_errx(context, 1, "initcreds, context not NULL, but first req");
     }
-	
+
     if ((flags & GSS_C_DELEG_FLAG) != 0)
 	logmessage(c, __FILE__, __LINE__, 0, "init_sec_context delegating");
     if ((flags & GSS_C_DCE_STYLE) != 0)
@@ -427,7 +430,6 @@ HandleOP(AcceptContext)
     gss_ctx_id_t ctx;
     gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
     gss_buffer_desc input_token, output_token;
-    gss_buffer_t input_token_ptr = GSS_C_NO_BUFFER;
 
     ret32(c, hContext);
     ret32(c, flags);
@@ -440,7 +442,6 @@ HandleOP(AcceptContext)
     if (in_token.length) {
 	input_token.length = in_token.length;
 	input_token.value = in_token.data;
-	input_token_ptr = &input_token;
     } else {
 	input_token.length = 0;
 	input_token.value = NULL;
@@ -484,7 +485,7 @@ HandleOP(AcceptContext)
 	gss_release_cred(&min_stat, &deleg_cred);
 	deleg_hcred = 0;
     }
-	
+
 
     gsm_error = convert_gss_to_gsm(maj_stat);
 
@@ -645,6 +646,7 @@ HandleOP(GetVersionAndCapabilities)
 {
     int32_t cap = HAS_MONIKER;
     char name[256] = "unknown", *str;
+    int ret;
 
     if (targetname)
 	cap |= ISSERVER; /* is server */
@@ -659,7 +661,9 @@ HandleOP(GetVersionAndCapabilities)
     }
 #endif
 
-    asprintf(&str, "gssmask %s %s", PACKAGE_STRING, name);
+    ret = asprintf(&str, "gssmask %s %s", PACKAGE_STRING, name);
+    if (ret == -1)
+	errx(1, "out of memory");
 
     put32(c, GSSMAGGOTPROTOCOL);
     put32(c, cap);
@@ -799,7 +803,7 @@ HandleOP(Unwrap)
 
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_unwrap failed: %d/%d", maj_stat, min_stat);
-	
+
     krb5_data_free(&token);
     if (maj_stat == GSS_S_COMPLETE) {
 	token.data = output_token.value;
@@ -848,22 +852,12 @@ HandleOP(CallExtension)
     errx(1, "CallExtension");
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
-_krb5_pk_enterprise_cert (
-	krb5_context /*context*/,
-	const char */*user_id*/,
-	krb5_const_realm /*realm*/,
-	krb5_principal */*principal*/);
-
-
 static int
 HandleOP(AcquirePKInitCreds)
 {
-    krb5_error_code ret;
     int32_t flags;
     krb5_data pfxdata;
     char fn[] = "FILE:/tmp/pkcs12-creds-XXXXXXX";
-    const char *default_realm = "H5L.ORG";
     krb5_principal principal = NULL;
     int fd;
 
@@ -877,13 +871,6 @@ HandleOP(AcquirePKInitCreds)
     net_write(fd, pfxdata.data, pfxdata.length);
     krb5_data_free(&pfxdata);
     close(fd);
-
-    /* get credentials */
-
-    ret = _krb5_pk_enterprise_cert(context, fn, default_realm, &principal);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_pk_enterprise_certs");
-
 
     if (principal)
 	krb5_free_principal(context, principal);
@@ -1030,7 +1017,7 @@ HandleOP(UnwrapExt)
 
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_unwrap failed: %d/%d", maj_stat, min_stat);
-	
+
     if (maj_stat == GSS_S_COMPLETE) {
 	token.data = iov[1].buffer.value;
 	token.length = iov[1].buffer.length;
@@ -1103,6 +1090,7 @@ static struct client *
 create_client(int fd, int port, const char *moniker)
 {
     struct client *c;
+    int ret;
 
     c = ecalloc(1, sizeof(*c));
 
@@ -1111,13 +1099,18 @@ create_client(int fd, int port, const char *moniker)
     } else {
 	char hostname[MAXHOSTNAMELEN];
 	gethostname(hostname, sizeof(hostname));
-	asprintf(&c->moniker, "gssmask: %s:%d", hostname, port);
+	ret = asprintf(&c->moniker, "gssmask: %s:%d", hostname, port);
+	if (ret == -1)
+	    c->moniker = NULL;
     }
+
+    if (!c->moniker)
+	errx(1, "out of memory");
 
     {
 	c->salen = sizeof(c->sa);
 	getpeername(fd, (struct sockaddr *)&c->sa, &c->salen);
-	
+
 	getnameinfo((struct sockaddr *)&c->sa, c->salen,
 		    c->servername, sizeof(c->servername),
 		    NULL, 0, NI_NUMERICHOST);

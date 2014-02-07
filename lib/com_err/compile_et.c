@@ -79,6 +79,9 @@ generate_c(void)
     if(id_str)
 	fprintf(c_file, "/* %s */\n", id_str);
     fprintf(c_file, "\n");
+    fprintf(c_file, "#ifdef HAVE_CONFIG_H\n");
+    fprintf(c_file, "#include <config.h>\n");
+    fprintf(c_file, "#endif\n");
     fprintf(c_file, "#include <stddef.h>\n");
     fprintf(c_file, "#include <com_err.h>\n");
     fprintf(c_file, "#include \"%s\"\n", hfn);
@@ -93,7 +96,7 @@ generate_c(void)
 	    fprintf(c_file, "\t/* %03d */ \"Reserved %s error (%d)\",\n",
 		    n, name, n);
 	    n++;
-	
+
 	}
 	fprintf(c_file, "\t/* %03d */ N_(\"%s\"),\n",
 		ec->number, ec->string);
@@ -186,8 +189,8 @@ generate(void)
 int version_flag;
 int help_flag;
 struct getargs args[] = {
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 
@@ -220,7 +223,7 @@ main(int argc, char **argv)
     yyin = fopen(filename, "r");
     if(yyin == NULL)
 	err(1, "%s", filename);
-	
+
 
     p = strrchr(filename, rk_PATH_DELIM);
     if(p)

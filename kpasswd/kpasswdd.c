@@ -123,21 +123,26 @@ make_result (krb5_data *data,
 	     uint16_t result_code,
 	     const char *expl)
 {
-    char *str;
-    krb5_data_zero (data);
+    krb5_error_code ret;
+    krb5_storage *sp;
 
-    data->length = asprintf (&str,
-			     "%c%c%s",
-			     (result_code >> 8) & 0xFF,
-			     result_code & 0xFF,
-			     expl);
+    sp = krb5_storage_emem();
+    if (sp == NULL) goto out;
+    ret = krb5_store_uint16(sp, result_code);
+    if (ret) goto out;
+    ret = krb5_store_stringz(sp, expl);
+    if (ret) goto out;
+    ret = krb5_storage_to_data(sp, data);
+    if (ret) goto out;
+    krb5_storage_free(sp);
 
-    if (str == NULL) {
-	krb5_warnx (context, "Out of memory generating error reply");
-	return 1;
-    }
-    data->data = str;
     return 0;
+ out:
+    if (sp)
+	krb5_storage_free(sp);
+
+    krb5_warnx (context, "Out of memory generating error reply");
+    return 1;
 }
 
 static void
@@ -272,7 +277,7 @@ change (krb5_auth_context auth_context,
 			"malformed ChangePasswdData");
 	    return;
 	}
-	
+
 
 	ret = krb5_copy_data(context, &chpw.newpasswd, &pwd_data);
 	if (ret) {
@@ -293,6 +298,7 @@ change (krb5_auth_context auth_context,
 	if (chpw.targname) {
 	    krb5_principal_data princ;
 
+	    memset(&princ, 0, sizeof (princ));
 	    princ.name = *chpw.targname;
 	    princ.realm = *chpw.targrealm;
 	    if (princ.realm == NULL) {
@@ -401,7 +407,7 @@ change (krb5_auth_context auth_context,
     tmp = pwd_data->data;
     tmp[pwd_data->length - 1] = '\0';
 
-    ret = kadm5_s_chpass_principal_cond (kadm5_handle, principal, tmp);
+    ret = kadm5_s_chpass_principal_cond (kadm5_handle, principal, 1, tmp);
     krb5_free_data (context, pwd_data);
     pwd_data = NULL;
     if (ret) {
@@ -439,7 +445,8 @@ verify (krb5_auth_context *auth_context,
 	struct sockaddr *sa,
 	int sa_size,
 	u_char *msg,
-	size_t len)
+	size_t len,
+	krb5_address *client_addr)
 {
     krb5_error_code ret;
     uint16_t pkt_len, pkt_ver, ap_req_len;
@@ -540,6 +547,21 @@ verify (krb5_auth_context *auth_context,
     krb_priv_data.data   = msg + 6 + ap_req_len;
     krb_priv_data.length = len - 6 - ap_req_len;
 
+    /*
+     * Only enforce client addresses on on tickets with addresses.  If
+     * its addressless, we are guessing its behind NAT and really
+     * can't know this information.
+     */
+
+    if ((*ticket)->ticket.caddr && (*ticket)->ticket.caddr->len > 0) {
+	ret = krb5_auth_con_setaddrs (context, *auth_context,
+				      NULL, client_addr);
+	if (ret) {
+	    krb5_warn (context, ret, "krb5_auth_con_setaddr(this)");
+	    goto out;
+	}
+    }
+
     ret = krb5_rd_priv (context,
 			*auth_context,
 			&krb_priv_data,
@@ -576,7 +598,7 @@ process (krb5_realm *realms,
     krb5_address other_addr;
     uint16_t version;
 
-
+    memset(&other_addr, 0, sizeof(other_addr));
     krb5_data_zero (&out_data);
 
     ret = krb5_auth_con_init (context, &auth_context);
@@ -594,18 +616,27 @@ process (krb5_realm *realms,
 	goto out;
     }
 
-    ret = krb5_auth_con_setaddrs (context,
-				  auth_context,
-				  this_addr,
-				  &other_addr);
-    krb5_free_address (context, &other_addr);
+    ret = krb5_auth_con_setaddrs (context, auth_context, this_addr, NULL);
     if (ret) {
-	krb5_warn (context, ret, "krb5_auth_con_setaddr");
+	krb5_warn (context, ret, "krb5_auth_con_setaddr(this)");
 	goto out;
     }
 
     if (verify (&auth_context, realms, keytab, &ticket, &out_data,
-		&version, s, sa, sa_size, msg, len) == 0) {
+		&version, s, sa, sa_size, msg, len, &other_addr) == 0)
+    {
+	/*
+	 * We always set the client_addr, to assume that the client
+	 * can ignore it if it choose to do so (just the server does
+	 * so for addressless tickets).
+	 */
+	ret = krb5_auth_con_setaddrs (context, auth_context, 
+				      this_addr, &other_addr);
+	if (ret) {
+	    krb5_warn (context, ret, "krb5_auth_con_setaddr(other)");
+	    goto out;
+	}
+
 	change (auth_context,
 		ticket->client,
 		version,
@@ -617,8 +648,9 @@ process (krb5_realm *realms,
     }
 
 out:
-    krb5_data_free (&out_data);
-    krb5_auth_con_free (context, auth_context);
+    krb5_free_address(context, &other_addr);
+    krb5_data_free(&out_data);
+    krb5_auth_con_free(context, auth_context);
 }
 
 static int
@@ -656,8 +688,8 @@ doit (krb5_keytab keytab, int port)
 	krb5_socklen_t sa_size = sizeof(__ss);
 
 	krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
-	
-	sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
+
+	sockets[i] = socket (__ss.ss_family, SOCK_DGRAM, 0);
 	if (sockets[i] < 0)
 	    krb5_err (context, 1, errno, "socket");
 	if (bind (sockets[i], sa, sa_size) < 0) {
@@ -680,11 +712,11 @@ doit (krb5_keytab keytab, int port)
 	krb5_errx (context, 1, "No sockets!");
 
     while(exit_flag == 0) {
-	int ret;
+	krb5_ssize_t retx;
 	fd_set fdset = real_fdset;
 
-	ret = select (maxfd + 1, &fdset, NULL, NULL, NULL);
-	if (ret < 0) {
+	retx = select (maxfd + 1, &fdset, NULL, NULL, NULL);
+	if (retx < 0) {
 	    if (errno == EINTR)
 		continue;
 	    else
@@ -695,9 +727,9 @@ doit (krb5_keytab keytab, int port)
 		u_char buf[BUFSIZ];
 		socklen_t addrlen = sizeof(__ss);
 
-		ret = recvfrom (sockets[i], buf, sizeof(buf), 0,
+		retx = recvfrom(sockets[i], buf, sizeof(buf), 0,
 				sa, &addrlen);
-		if (ret < 0) {
+		if (retx < 0) {
 		    if(errno == EINTR)
 			break;
 		    else
@@ -707,7 +739,7 @@ doit (krb5_keytab keytab, int port)
 		process (realms, keytab, sockets[i],
 			 &addrs.val[i],
 			 sa, addrlen,
-			 buf, ret);
+			 buf, retx);
 	    }
     }
 
@@ -730,7 +762,8 @@ sigterm(int sig)
 static const char *check_library  = NULL;
 static const char *check_function = NULL;
 static getarg_strings policy_libraries = { 0, NULL };
-static char *keytab_str = "HDB:";
+static char sHDB[] = "HDB:";
+static char *keytab_str = sHDB;
 static char *realm_str;
 static int version_flag;
 static int help_flag;
@@ -750,11 +783,11 @@ struct getargs args[] = {
       "addresses to listen on", "list of addresses" },
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication key from", "kspec" },
-    { "config-file", 'c', arg_string, &config_file },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
     { "realm", 'r', arg_string, &realm_str, "default realm", "realm" },
-    { "port",  'p', arg_string, &port_str, "port" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "port",  'p', arg_string, &port_str, "port", NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 
@@ -765,6 +798,7 @@ main (int argc, char **argv)
     krb5_error_code ret;
     char **files;
     int port, i;
+    int aret;
 
     krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
@@ -776,8 +810,8 @@ main (int argc, char **argv)
     }
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	if (aret == -1)
 	    errx(1, "out of memory");
     }
 
@@ -836,10 +870,10 @@ main (int argc, char **argv)
     explicit_addresses.len = 0;
 
     if (addresses_str.num_strings) {
-	int i;
+	int j;
 
-	for (i = 0; i < addresses_str.num_strings; ++i)
-	    add_one_address (addresses_str.strings[i], i == 0);
+	for (j = 0; j < addresses_str.num_strings; ++j)
+	    add_one_address (addresses_str.strings[j], j == 0);
 	free_getarg_strings (&addresses_str);
     } else {
 	char **foo = krb5_config_get_strings (context, NULL,

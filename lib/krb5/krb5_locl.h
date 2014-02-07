@@ -120,6 +120,8 @@ struct sockaddr_dl;
 
 #include <com_err.h>
 
+#include <heimbase.h>
+
 #define HEIMDAL_TEXTDOMAIN "heimdal_krb5"
 
 #ifdef LIBINTL
@@ -176,12 +178,25 @@ struct _krb5_krb_auth_data;
 #ifdef PKINIT
 #include <hx509.h>
 #endif
+
+#include "crypto.h"
+
 #include <krb5-private.h>
 
 #include "heim_threads.h"
 
 #define ALLOC(X, N) (X) = calloc((N), sizeof(*(X)))
 #define ALLOC_SEQ(X, N) do { (X)->len = (N); ALLOC((X)->val, (N)); } while(0)
+
+#ifndef __func__
+#define __func__ "unknown-function"
+#endif
+
+#define krb5_einval(context, argnum) _krb5_einval((context), __func__, (argnum))
+
+#ifndef PATH_SEP
+#define PATH_SEP ":"
+#endif
 
 /* should this be public? */
 #define KEYTAB_DEFAULT "FILE:" SYSCONFDIR "/krb5.keytab"
@@ -203,7 +218,7 @@ struct _krb5_krb_auth_data;
 #endif
 
 
-#define KRB5_BUFSIZ 1024
+#define KRB5_BUFSIZ 2048
 
 typedef enum {
     KRB5_INIT_CREDS_TRISTATE_UNSET = 0,
@@ -231,9 +246,14 @@ struct _krb5_get_init_creds_opt_private {
     } lr;
 };
 
+typedef uint32_t krb5_enctype_set;
+
 typedef struct krb5_context_data {
     krb5_enctype *etypes;
-    krb5_enctype *etypes_des;
+    krb5_enctype *etypes_des;/* deprecated */
+    krb5_enctype *as_etypes;
+    krb5_enctype *tgs_etypes;
+    krb5_enctype *permitted_enctypes;
     char **default_realms;
     time_t max_skew;
     time_t kdc_timeout;
@@ -267,13 +287,14 @@ typedef struct krb5_context_data {
     char *default_cc_name;
     char *default_cc_name_env;
     int default_cc_name_set;
-    void *mutex;			/* protects error_string/error_buf */
+    void *mutex;			/* protects error_string */
     int large_msg_size;
     int flags;
 #define KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME	1
 #define KRB5_CTX_F_CHECK_PAC			2
 #define KRB5_CTX_F_HOMEDIR_ACCESS		4
 #define KRB5_CTX_F_SOCKETS_INITIALIZED          8
+#define KRB5_CTX_F_RD_REQ_IGNORE		16
     struct send_to_kdc *send_to_kdc;
 #ifdef PKINIT
     hx509_context hx509ctx;

@@ -36,7 +36,10 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
 
 #include <sys/poll.h>
 
@@ -46,9 +49,14 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef HAVE_GETPEERUCRED
+#include <ucred.h>
+#endif
+
 #include <krb5-types.h>
 #include <asn1-common.h>
 
+#include <heimbase.h>
 #include <base64.h>
 
 #include <heim-ipc.h>
