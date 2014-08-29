@@ -34,6 +34,7 @@
  */
 
 #include "kdc_locl.h"
+#include "send_to_kdc_plugin.h"
 
 struct perf {
     unsigned long as_req;
@@ -62,10 +63,37 @@ static void eval_object(heim_object_t);
  */
 
 static krb5_error_code
-send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
-	    const krb5_data *in, krb5_data *out)
+plugin_init(krb5_context context, void **pctx)
 {
-    krb5_error_code ret;
+    *pctx = NULL;
+    return 0;
+}
+
+static void
+plugin_fini(void *ctx)
+{
+}
+
+static krb5_error_code
+plugin_send_to_kdc(krb5_context context,
+		   void *ctx,
+		   krb5_krbhst_info *ho,
+		   time_t timeout,
+		   const krb5_data *in,
+		   krb5_data *out)
+{
+    return KRB5_PLUGIN_NO_HANDLE;
+}
+
+static krb5_error_code
+plugin_send_to_realm(krb5_context context,
+		     void *ctx,
+		     krb5_const_realm realm,
+		     time_t timeout,
+		     const krb5_data *in,
+		     krb5_data *out)
+{
+    int ret;
 
     krb5_kdc_update_time(NULL);
 
@@ -74,10 +102,18 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
 				   out, NULL, astr,
 				   (struct sockaddr *)&sa, 0);
     if (ret)
-	krb5_err(c, 1, ret, "krb5_kdc_process_request");
+	krb5_err(kdc_context, 1, ret, "krb5_kdc_process_request");
 
     return 0;
 }
+
+static krb5plugin_send_to_kdc_ftable send_to_kdc = {
+    KRB5_PLUGIN_SEND_TO_KDC_VERSION_2,
+    plugin_init,
+    plugin_fini,
+    plugin_send_to_kdc,
+    plugin_send_to_realm
+};
 
 static void
 perf_start(struct perf *perf)
@@ -150,6 +186,27 @@ eval_repeat(heim_dict_t o)
  *
  */
 
+static krb5_error_code
+copy_keytab(krb5_context context, krb5_keytab from, krb5_keytab to)
+{
+    krb5_keytab_entry entry;
+    krb5_kt_cursor cursor;
+    krb5_error_code ret;
+
+    ret = krb5_kt_start_seq_get(context, from, &cursor);
+    if (ret)
+	return ret;
+    while((ret = krb5_kt_next_entry(context, from, &entry, &cursor)) == 0){
+	krb5_kt_add_entry(context, to, &entry);
+	krb5_kt_free_entry(context, &entry);
+    }
+    return krb5_kt_end_seq_get(context, from, &cursor);
+}	    
+
+/*
+ *
+ */
+
 static void
 eval_kinit(heim_dict_t o)
 {
@@ -157,7 +214,7 @@ eval_kinit(heim_dict_t o)
     krb5_get_init_creds_opt *opt;
     krb5_init_creds_context ctx;
     krb5_principal client;
-    krb5_keytab kt = NULL;
+    krb5_keytab ktmem = NULL;
     krb5_ccache fast_cc = NULL;
     krb5_error_code ret;
 
@@ -222,11 +279,23 @@ eval_kinit(heim_dict_t o)
 	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_password");
     }
     if (keytab) {
+	krb5_keytab kt = NULL;
+
 	ret = krb5_kt_resolve(kdc_context, heim_string_get_utf8(keytab), &kt);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve");
 
-	ret = krb5_init_creds_set_keytab(kdc_context, ctx, kt);
+	ret = krb5_kt_resolve(kdc_context, "MEMORY:keytab", &ktmem);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve(MEMORY)");
+
+	ret = copy_keytab(kdc_context, kt, ktmem);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "copy_keytab");
+
+	krb5_kt_close(kdc_context, kt);
+
+	ret = krb5_init_creds_set_keytab(kdc_context, ctx, ktmem);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_keytab");
     }
@@ -259,8 +328,8 @@ eval_kinit(heim_dict_t o)
 
     krb5_init_creds_free(kdc_context, ctx);
 
-    if (kt)
-	krb5_kt_close(kdc_context, kt);
+    if (ktmem)
+	krb5_kt_close(kdc_context, ktmem);
     if (fast_cc)
 	krb5_cc_close(kdc_context, fast_cc);
 }
@@ -350,7 +419,7 @@ eval_kdestroy(heim_dict_t o)
  */
 
 static void
-eval_array_element(heim_object_t o, void *ptr)
+eval_array_element(heim_object_t o, void *ptr, int *stop)
 {
     eval_object(o);
 }
@@ -398,7 +467,7 @@ main(int argc, char **argv)
     else if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    ret = krb5_kt_register(kdc_context, &hdb_kt_ops);
+    ret = krb5_kt_register(kdc_context, &hdb_get_kt_ops);
     if (ret)
 	errx (1, "krb5_kt_register(HDB) failed: %d", ret);
 
@@ -410,7 +479,8 @@ main(int argc, char **argv)
     if (argc == 0)
 	errx(1, "missing operations");
 
-    krb5_set_send_to_kdc_func(kdc_context, send_to_kdc, NULL);
+    krb5_plugin_register(kdc_context, PLUGIN_TYPE_DATA,
+			 KRB5_PLUGIN_SEND_TO_KDC, &send_to_kdc);
 
     {
 	void *buf;

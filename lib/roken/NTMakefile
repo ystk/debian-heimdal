@@ -69,6 +69,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\issuid.obj		\
 	$(OBJ)\localtime_r.obj		\
 	$(OBJ)\lstat.obj		\
+	$(OBJ)\mkdir.obj                \
 	$(OBJ)\mini_inetd.obj		\
 	$(OBJ)\mkstemp.obj		\
 	$(OBJ)\net_read.obj		\
@@ -116,6 +117,8 @@ libroken_la_OBJS =			\
 	$(OBJ)\warn.obj			\
 	$(OBJ)\warnerr.obj		\
 	$(OBJ)\warnx.obj		\
+        $(OBJ)\win32_alloc.obj          \
+	$(OBJ)\writev.obj               \
 	$(OBJ)\xfree.obj
 
 !if $(NMAKE_WINVER) < 0x0600
@@ -163,11 +166,10 @@ INCFILES = 			\
 	$(INCDIR)\stdbool.h	\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
+!ifndef HAVE_STDINT_H
+	$(INCDIR)\stdint.h	\
+!endif
 	$(INCDIR)\xdbm.h
-
-#!ifndef HAVE_STDINT_H
-#INCFILES += $(INCDIR)\stdint.h
-#!endif
 
 clean::
 	-$(RM) $(XHEADERS)
@@ -237,7 +239,7 @@ $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
 	$(EXECONLINK) DnsAPI.lib
 
-$(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj
+$(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\getaddrinfo-test.exe: $(OBJ)\getaddrinfo-test.obj $(LIBROKEN)

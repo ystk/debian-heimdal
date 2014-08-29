@@ -62,8 +62,6 @@ dist_libhx509_la_SOURCES = \
 	error.c \
 	env.c \
 	file.c \
-	hx509-private.h \
-	hx509-protos.h \
 	hx509.h \
 	hx_locl.h \
 	sel.c \
@@ -96,7 +94,7 @@ libhx509_la_LIBADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
-	$(top_builddir)/base/libheimbase.la \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIBADD_roken) \
 	$(LIB_dlopen)
 
@@ -116,7 +114,9 @@ $(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
 $(gen_files_pkcs10) pkcs10_asn1.hx pkcs10_asn1-priv.hx: pkcs10_asn1_files
 $(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
 
-dist_include_HEADERS = hx509.h hx509-protos.h
+dist_include_HEADERS = hx509.h $(srcdir)/hx509-protos.h
+
+noinst_HEADERS = $(srcdir)/hx509-private.h
 
 nodist_include_HEADERS = hx509_err.h
 nodist_include_HEADERS += ocsp_asn1.h
@@ -137,13 +137,20 @@ pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1 $(srcdir)/pkcs10.op
 crmf_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/crmf.asn1
 	$(heim_verbose)$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
 
-$(libhx509_la_OBJECTS): $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h $(srcdir)/hx_locl.h
+ALL_OBJECTS  = $(libhx509_la_OBJECTS)
+ALL_OBJECTS += $(hxtool_OBJECTS)
+
+HX509_PROTOS = $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h
+
+$(ALL_OBJECTS): $(HX509_PROTOS)
+
+$(libhx509_la_OBJECTS): $(srcdir)/hx_locl.h
 $(libhx509_la_OBJECTS): ocsp_asn1.h pkcs10_asn1.h
 
-$(srcdir)/hx509-protos.h:
+$(srcdir)/hx509-protos.h: $(dist_libhx509_la_SOURCES)
 	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
 
-$(srcdir)/hx509-private.h:
+$(srcdir)/hx509-private.h: $(dist_libhx509_la_SOURCES)
 	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
 
 bin_PROGRAMS = hxtool
@@ -154,7 +161,7 @@ hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC)
 dist_hxtool_SOURCES = hxtool.c
 nodist_hxtool_SOURCES = hxtool-commands.c hxtool-commands.h
 
-$(hxtool_OBJECTS): hxtool-commands.h
+$(hxtool_OBJECTS): hxtool-commands.h hx509_err.h
 
 hxtool_CPPFLAGS = $(INCLUDE_hcrypto)
 hxtool_LDADD = \
@@ -166,11 +173,11 @@ hxtool_LDADD = \
 
 CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1{,-priv}.h* \
-	ocsp_asn1-template.[ch]* \
+	ocsp_asn1-template.[chx]* \
 	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1{,-priv}.h* \
-	pkcs10_asn1-template.[ch]* \
+	pkcs10_asn1-template.[chx]* \
 	$(gen_files_crmf) crmf_asn1_files crmf_asn1{,-priv}.h* \
-	crmf_asn1-template.[ch]* \
+	crmf_asn1-template.[chx]* \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
 	request.out \
@@ -200,10 +207,12 @@ check_PROGRAMS = $(PROGRAM_TESTS) test_soft_pkcs11
 LDADD = libhx509.la
 
 test_soft_pkcs11_LDADD = libhx509.la
-test_soft_pkcs11_CPPFLAGS = -I$(srcdir)/ref
+test_soft_pkcs11_CPPFLAGS = $(INCLUDE_hcrypto) -I$(srcdir)/ref
 
 test_name_CPPFLAGS = $(INCLUDE_hcrypto)
 test_name_LDADD = libhx509.la $(LIB_roken)
+test_expr_CPPFLAGS = $(INCLUDE_hcrypto)
+test_expr_LDADD = libhx509.la $(LIB_roken)
 
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 

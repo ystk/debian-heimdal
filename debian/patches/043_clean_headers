@@ -1,0 +1,20 @@
+diff --git a/include/Makefile.am b/include/Makefile.am
+index 0e2ef0c..091ee01 100644
+--- a/include/Makefile.am
++++ b/include/Makefile.am
+@@ -39,7 +39,6 @@ CLEANFILES =			\
+ 	com_err.h		\
+ 	com_right.h		\
+ 	crmf_asn1.h		\
+-	crypto-headers.h	\
+ 	db_plugin.h		\
+ 	der-private.h 		\
+ 	der-protos.h 		\
+@@ -59,7 +58,6 @@ CLEANFILES =			\
+ 	heim-ipc.h		\
+ 	heim_asn1.h		\
+ 	heim_err.h		\
+-	heim_threads.h		\
+ 	heimbase.h		\
+ 	heimntlm-protos.h	\
+ 	heimntlm.h		\

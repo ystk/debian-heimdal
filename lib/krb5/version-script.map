@@ -2,10 +2,6 @@ HEIMDAL_KRB5_2.0 {
 	global:
 		krb524_convert_creds_kdc;
 		krb524_convert_creds_kdc_ccache;
-		krb5_425_conv_principal;
-		krb5_425_conv_principal_ext2;
-		krb5_425_conv_principal_ext;
-		krb5_524_conv_principal;
 		krb5_abort;
 		krb5_abortx;
 		krb5_acl_match_file;
@@ -448,7 +444,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_net_write_block;
 		krb5_ntlm_alloc;
 		krb5_ntlm_free;
-		krb5_ntlm_init_get_challange;
+		krb5_ntlm_init_get_challenge;
 		krb5_ntlm_init_get_flags;
 		krb5_ntlm_init_get_opaque;
 		krb5_ntlm_init_get_targetinfo;
@@ -600,6 +596,8 @@ HEIMDAL_KRB5_2.0 {
 		krb5_storage_from_fd;
 		krb5_storage_from_mem;
 		krb5_storage_from_readonly_mem;
+		krb5_storage_from_socket;
+		krb5_storage_fsync;
 		krb5_storage_get_byteorder;
 		krb5_storage_get_eof_code;
 		krb5_storage_is_flags;
@@ -704,6 +702,7 @@ HEIMDAL_KRB5_2.0 {
 		initialize_k524_error_table;
 
 		# variables
+		krb5_dcc_ops;
 		krb5_mcc_ops;
 		krb5_acc_ops;
 		krb5_fcc_ops;
@@ -718,30 +717,20 @@ HEIMDAL_KRB5_2.0 {
 		krb5_config_file;
 		krb5_defkeyname;
 		krb5_cc_type_api;
+		krb5_cc_type_dcc;
 		krb5_cc_type_file;
 		krb5_cc_type_memory;
 		krb5_cc_type_kcm;
 		krb5_cc_type_scc;
+
+		# shared with HDB
+		_krb5_plugin_run_f;
 
 		# Shared with GSSAPI krb5
 		_krb5_crc_init_table;		
 		_krb5_crc_update;		
 		_krb5_get_krbtgt;
 		_krb5_build_authenticator;
-
-		# V4 compat glue
-		_krb5_krb_tf_setup;
-		_krb5_krb_dest_tkt;
-		_krb5_krb_life_to_time;
-		_krb5_krb_decomp_ticket;
-		_krb5_krb_decomp_ticket;
-		_krb5_krb_create_ticket;
-		_krb5_krb_create_ciph;
-		_krb5_krb_create_auth_reply;
-		_krb5_krb_rd_req;
-		_krb5_krb_free_auth_data;
-		_krb5_krb_time_to_life;
-		_krb5_krb_cr_err_reply;
 
 		# Shared with libkdc
 		_krb5_AES_string_to_default_iterator;
@@ -756,8 +745,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_pk_octetstring2key;
 		_krb5_plugin_find;
 		_krb5_plugin_free;
-		_krb5_plugin_get_next;
-		_krb5_plugin_get_symbol;
+		_krb5_plugin_run_f;
 		_krb5_principal2principalname;
 		_krb5_principalname2krb5_principal;
 		_krb5_put_int;
@@ -782,6 +770,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_aes_cts_encrypt;
 		_krb5_n_fold;
 		_krb5_expand_default_cc_name;
+		_krb5_expand_path_tokensv;
 		
 		# FAST
 		_krb5_fast_cf2;

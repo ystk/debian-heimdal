@@ -6,6 +6,7 @@ libkrb5.so.26 #PACKAGE# #MINVER#
  _krb5_crc_update@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  _krb5_dh_group_ok@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  _krb5_expand_default_cc_name@HEIMDAL_KRB5_2.0 1.4.0+git20110226
+ _krb5_expand_path_tokensv@HEIMDAL_KRB5_2.0 1.6~git20131117
  _krb5_fast_armor_key@HEIMDAL_KRB5_2.0 1.6~git20120311
  _krb5_fast_cf2@HEIMDAL_KRB5_2.0 1.6~git20120311
  _krb5_get_host_realm_int@HEIMDAL_KRB5_2.0 1.4.0+git20110226
@@ -20,8 +21,7 @@ libkrb5.so.26 #PACKAGE# #MINVER#
  _krb5_pk_octetstring2key@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  _krb5_plugin_find@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  _krb5_plugin_free@HEIMDAL_KRB5_2.0 1.4.0+git20110226
- _krb5_plugin_get_next@HEIMDAL_KRB5_2.0 1.4.0+git20110226
- _krb5_plugin_get_symbol@HEIMDAL_KRB5_2.0 1.4.0+git20110226
+ _krb5_plugin_run_f@HEIMDAL_KRB5_2.0 1.6~git20131117
  _krb5_principal2principalname@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  _krb5_principalname2krb5_principal@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  _krb5_put_int@HEIMDAL_KRB5_2.0 1.4.0+git20110226
@@ -160,6 +160,7 @@ libkrb5.so.26 #PACKAGE# #MINVER#
  krb5_cc_support_switch@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_cc_switch@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_cc_type_api@HEIMDAL_KRB5_2.0 1.4.0+git20110226
+ krb5_cc_type_dcc@HEIMDAL_KRB5_2.0 1.6~git20131117
  krb5_cc_type_file@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_cc_type_kcm@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_cc_type_memory@HEIMDAL_KRB5_2.0 1.4.0+git20110226
@@ -242,6 +243,7 @@ libkrb5.so.26 #PACKAGE# #MINVER#
  krb5_data_free@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_data_realloc@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_data_zero@HEIMDAL_KRB5_2.0 1.4.0+git20110226
+ krb5_dcc_ops@HEIMDAL_KRB5_2.0 1.6~git20131117
  krb5_decode_Authenticator@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_decode_ETYPE_INFO2@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_decode_ETYPE_INFO@HEIMDAL_KRB5_2.0 1.4.0+git20110226
@@ -507,7 +509,7 @@ libkrb5.so.26 #PACKAGE# #MINVER#
  krb5_net_write_block@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_ntlm_alloc@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_ntlm_free@HEIMDAL_KRB5_2.0 1.4.0+git20110226
- krb5_ntlm_init_get_challange@HEIMDAL_KRB5_2.0 1.4.0+git20110226
+ krb5_ntlm_init_get_challenge@HEIMDAL_KRB5_2.0 1.6~git20131117
  krb5_ntlm_init_get_flags@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_ntlm_init_get_opaque@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_ntlm_init_get_targetinfo@HEIMDAL_KRB5_2.0 1.4.0+git20110226
@@ -661,6 +663,8 @@ libkrb5.so.26 #PACKAGE# #MINVER#
  krb5_storage_from_fd@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_storage_from_mem@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_storage_from_readonly_mem@HEIMDAL_KRB5_2.0 1.4.0+git20110226
+ krb5_storage_from_socket@HEIMDAL_KRB5_2.0 1.6~rc2
+ krb5_storage_fsync@HEIMDAL_KRB5_2.0 1.6~git20131117
  krb5_storage_get_byteorder@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_storage_get_eof_code@HEIMDAL_KRB5_2.0 1.4.0+git20110226
  krb5_storage_is_flags@HEIMDAL_KRB5_2.0 1.4.0+git20110226

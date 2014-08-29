@@ -1,6 +1,7 @@
 libhx509.so.5 #PACKAGE# #MINVER#
  C_GetFunctionList@HEIMDAL_X509_1.2 1.4.0+git20110226
  HEIMDAL_X509_1.2@HEIMDAL_X509_1.2 1.4.0+git20110226
+ HEIMDAL_X509_1.3@HEIMDAL_X509_1.3 1.6~rc2
  _hx509_cert_assign_key@HEIMDAL_X509_1.2 1.4.0+git20110226
  _hx509_cert_private_key@HEIMDAL_X509_1.2 1.4.0+git20110226
  _hx509_certs_keys_free@HEIMDAL_X509_1.2 1.4.0+git20110226
@@ -43,6 +44,7 @@ libhx509.so.5 #PACKAGE# #MINVER#
  hx509_ca_tbs_set_notBefore@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_ca_tbs_set_proxy@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_ca_tbs_set_serialnumber@HEIMDAL_X509_1.2 1.4.0+git20110226
+ hx509_ca_tbs_set_signature_algorithm@HEIMDAL_X509_1.3 1.6~rc2
  hx509_ca_tbs_set_spki@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_ca_tbs_set_subject@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_ca_tbs_set_template@HEIMDAL_X509_1.2 1.4.0+git20110226
@@ -201,6 +203,7 @@ libhx509.so.5 #PACKAGE# #MINVER#
  hx509_revoke_free@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_revoke_init@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_revoke_ocsp_print@HEIMDAL_X509_1.2 1.4.0+git20110226
+ hx509_revoke_print@HEIMDAL_X509_1.2 1.6~git20131117
  hx509_revoke_verify@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_set_error_string@HEIMDAL_X509_1.2 1.4.0+git20110226
  hx509_set_error_stringv@HEIMDAL_X509_1.2 1.4.0+git20110226

@@ -60,7 +60,7 @@ then
 
         # do stuff
         DST=/etc/heimdal-kdc/kdc.conf
-        zcat /usr/share/doc/heimdal-kdc/examples/kdc.conf.gz > "$DST"
+        cat /usr/share/heimdal-kdc/kdc.conf > "$DST"
         # note this symlink is required as we haven't patched the source
         if [ ! -e /var/lib/heimdal-kdc/kdc.conf ]
         then
@@ -68,11 +68,15 @@ then
         fi
 
         DST=/etc/heimdal-kdc/kadmind.acl
-        cp -a /usr/share/doc/heimdal-kdc/examples/kadmind.acl "$DST"
+        cp -a /usr/share/heimdal-kdc/kadmind.acl "$DST"
 
-        kstash --master-key-fd=0 <<EOF
+        if [ -z "$PASSWORD" ]; then
+            kstash --random-key
+        else
+            kstash --master-key-fd=0 <<EOF
 $PASSWORD
 EOF
+        fi
 
         kadmin  -l init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited "$REALM"
 

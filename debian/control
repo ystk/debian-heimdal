@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Brian May <bam@debian.org>
 Uploaders: Jelmer Vernooij <jelmer@debian.org>
 Homepage: http://www.h5l.org/
-Standards-Version: 3.9.3
+Standards-Version: 3.9.5
 Build-Depends: bison,
                comerr-dev (>= 1.41.11),
                debhelper (>= 8.1.3),
@@ -14,6 +14,7 @@ Build-Depends: bison,
                libdb-dev,
                libedit-dev,
                libhesiod-dev,
+               libjson-perl,
                libldap2-dev,
                libncurses5-dev,
                libperl4-corelibs-perl,
@@ -21,13 +22,14 @@ Build-Depends: bison,
                libx11-dev,
                libxau-dev,
                libxt-dev,
+               netbase,
                pkg-config,
                python,
                ss-dev,
                texinfo,
+               unzip,
                x11proto-core-dev
-Build-Conflicts: heimdal-dev
-Vcs-Git: git://git.debian.org/git/collab-maint/heimdal/
+Vcs-Git: git://anonscm.debian.org/collab-maint/heimdal/ -b unstable
 
 Package: heimdal-docs
 Section: doc
@@ -91,8 +93,11 @@ Depends: comerr-dev,
          libkdc2-heimdal (= ${binary:Version}),
          libkrb5-26-heimdal (= ${binary:Version}),
          libwind0-heimdal (= ${binary:Version}),
-         ${misc:Depends}
-Replaces: heimdal-clients (<< 0.4e-7)
+         libotp0-heimdal (= ${binary:Version}),
+         libsl0-heimdal (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Replaces: heimdal-clients (<< 0.4e-7), heimdal-dev (<< 1.6~git20131117+dfsg-2)
 Suggests: heimdal-docs
 Description: Heimdal Kerberos - Multi-implementation Development
  Heimdal is a free implementation of Kerberos 5 that aims to be
@@ -141,12 +146,8 @@ Conflicts: ftp (<< 0.16-1),
            kerberos4kth-user,
            netstd,
            openafs-client (<< 1.2.2-3),
-           otp,
-           rsh-client (<< 0.16.1-1),
-           ssltelnet,
-           telnet (<< 0.17-1),
-           telnet-ssl (<< 0.14.9-2)
-Provides: ftp, rsh-client, telnet-client
+           otp
+Provides: ftp
 Suggests: heimdal-docs, heimdal-kcm
 Replaces: heimdal-servers (<< 0.6.3-12)
 Description: Heimdal Kerberos - clients
@@ -200,12 +201,8 @@ Conflicts: ftp-server,
            kerberos4kth-services,
            netstd,
            pop3-server,
-           rsh-server,
-           telnet-server,
-           telnetd,
-           telnetd-ssl,
            wu-ftpd-academ (<< 2.5.0)
-Provides: ftp-server, pop3-server, rsh-server, telnet-server
+Provides: ftp-server
 Suggests: heimdal-docs
 Replaces: heimdal-clients (<< 0.2l-2)
 Description: Heimdal Kerberos - server programs
@@ -272,6 +269,7 @@ Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Replaces: heimdal-lib (<< 0.3e-5)
 Conflicts: heimdal-libs (<< 0.3e-5)
+Provides: heimdal-hdb-api-8
 Description: Heimdal Kerberos - kadmin server library
  Heimdal is a free implementation of Kerberos 5 that aims to be
  compatible with MIT Kerberos.

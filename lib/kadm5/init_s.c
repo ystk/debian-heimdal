@@ -32,8 +32,7 @@
  */
 
 #include "kadm5_locl.h"
-
-RCSID("$Id$");
+#include <fcntl.h>
 
 
 static kadm5_ret_t
@@ -91,6 +90,8 @@ kadm5_s_init_with_context(krb5_context context,
 					 ctx->log_context.socket_info->ai_socktype,
 					 ctx->log_context.socket_info->ai_protocol);
 #endif
+
+    socket_set_nonblocking(ctx->log_context.socket_fd, 1);
 
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
     if(ret)

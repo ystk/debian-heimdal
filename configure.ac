@@ -2,12 +2,12 @@ dnl Process this file with autoconf to produce a configure script.
 AC_REVISION($Revision$)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[1.5.99],[heimdal-bugs@h5l.org])
+AC_INIT([Heimdal],[1.6.99],[heimdal-bugs@h5l.org])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
 
-AM_INIT_AUTOMAKE([foreign 1.10.3])
+AM_INIT_AUTOMAKE([foreign 1.11])
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.
@@ -490,7 +490,7 @@ AC_CHECK_FUNCS([				\
 
 AC_MSG_CHECKING([checking for __sync_add_and_fetch])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>]],
-	[[unsigned int foo; __sync_add_and_fetch(&foo, 1);]])],
+	[[unsigned int foo, bar; bar = __sync_add_and_fetch(&foo, 1);]])],
 	[ac_rk_have___sync_add_and_fetch=yes], [ac_rk_have___sync_add_and_fetch=no])
 if test "$ac_rk_have___sync_add_and_fetch" = "yes" ; then
 	AC_DEFINE_UNQUOTED(HAVE___SYNC_ADD_AND_FETCH, 1, [have __sync_add_and_fetch])
@@ -500,6 +500,7 @@ AC_MSG_RESULT($ac_rk_have___sync_add_and_fetch)
 AC_FUNC_MMAP
 
 KRB_CAPABILITIES
+rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
 
@@ -609,7 +610,7 @@ AC_CONFIG_FILES(Makefile 		\
 	include/hcrypto/Makefile	\
 	include/kadm5/Makefile		\
 	lib/Makefile			\
-	base/Makefile			\
+	lib/base/Makefile			\
 	lib/asn1/Makefile		\
 	lib/com_err/Makefile		\
 	lib/hcrypto/Makefile		\
@@ -646,16 +647,9 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/kx/Makefile		\
 	appl/login/Makefile		\
 	appl/otp/Makefile		\
-	appl/popper/Makefile		\
 	appl/push/Makefile		\
-	appl/rsh/Makefile		\
-	appl/rcp/Makefile		\
 	appl/su/Makefile		\
 	appl/xnlock/Makefile		\
-	appl/telnet/Makefile		\
-	appl/telnet/libtelnet/Makefile	\
-	appl/telnet/telnet/Makefile	\
-	appl/telnet/telnetd/Makefile	\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\

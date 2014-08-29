@@ -38,6 +38,7 @@ libroken.so.18 #PACKAGE# #MINVER#
  rk_cloexec@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_cloexec_dir@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_cloexec_file@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
+ rk_cloexec_socket@HEIMDAL_ROKEN_1.0 1.6~git20131117
  rk_closefrom@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_copyhostent@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_dns_free_data@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
@@ -63,6 +64,7 @@ libroken.so.18 #PACKAGE# #MINVER#
  rk_hex_decode@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_hex_encode@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_hostent_find_fqdn@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
+ rk_mkdir@HEIMDAL_ROKEN_1.0 1.6~git20131117
  rk_pid_file_delete@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_pid_file_write@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_pidfile@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
@@ -85,6 +87,7 @@ libroken.so.18 #PACKAGE# #MINVER#
  rk_socket_set_any@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_socket_set_debug@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_socket_set_ipv6only@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
+ rk_socket_set_nonblocking@HEIMDAL_ROKEN_1.0 1.6~git20131117
  rk_socket_set_port@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_socket_set_portrange@HEIMDAL_ROKEN_1.0 1.4.0+git20110226
  rk_socket_set_reuseaddr@HEIMDAL_ROKEN_1.0 1.4.0+git20110226

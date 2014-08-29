@@ -361,7 +361,7 @@ get_dh_param(krb5_context context,
     }
 
     ret = _krb5_dh_group_ok(context, config->pkinit_dh_min_bits,
-			    &dhparam.p, &dhparam.g, &dhparam.q, moduli,
+			    &dhparam.p, &dhparam.g, dhparam.q, moduli,
 			    &client_params->dh_group_name);
     if (ret) {
 	/* XXX send back proposal of better group */
@@ -381,9 +381,12 @@ get_dh_param(krb5_context context,
     dh->g = integer_to_BN(context, "DH base", &dhparam.g);
     if (dh->g == NULL)
 	goto out;
-    dh->q = integer_to_BN(context, "DH p-1 factor", &dhparam.q);
-    if (dh->g == NULL)
-	goto out;
+
+    if (dhparam.q) {
+	dh->q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
+	if (dh->g == NULL)
+	    goto out;
+    }
 
     {
 	heim_integer glue;
@@ -540,11 +543,11 @@ _kdc_pk_rd_padata(krb5_context context,
 	unsigned int i;
 
 	for (i = 0; i < pc->len; i++) {
-	    ret = hx509_cert_init_data(context->hx509ctx,
-				       pc->val[i].cert.data,
-				       pc->val[i].cert.length,
-				       &cert);
-	    if (ret)
+	    cert = hx509_cert_init_data(context->hx509ctx,
+					pc->val[i].cert.data,
+					pc->val[i].cert.length,
+					NULL);
+	    if (cert == NULL)
 		continue;
 	    hx509_certs_add(context->hx509ctx, trust_anchors, cert);
 	    hx509_cert_free(cert);
@@ -1654,6 +1657,7 @@ match_ms_upn_san(krb5_context context,
     if (list.len != 1) {
 	kdc_log(context, config, 0,
 		"More then one PK-INIT MS UPN SAN");
+	ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	goto out;
     }
 
@@ -1742,11 +1746,11 @@ _kdc_pk_check_client(krb5_context context,
 	size_t j;
 
 	for (j = 0; j < pc->len; j++) {
-	    ret = hx509_cert_init_data(context->hx509ctx,
-				       pc->val[j].cert.data,
-				       pc->val[j].cert.length,
-				       &cert);
-	    if (ret)
+	    cert = hx509_cert_init_data(context->hx509ctx,
+					pc->val[j].cert.data,
+					pc->val[j].cert.length,
+					NULL);
+	    if (cert == NULL)
 		continue;
 	    ret = hx509_cert_cmp(cert, cp->cert);
 	    hx509_cert_free(cert);

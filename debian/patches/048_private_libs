@@ -1,0 +1,110 @@
+Description: Don't expose private libraries from .pc files
+Author: Jelmer Vernooij <jelmer@debian.org>
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=745543
+Status: forwarded upstream
+
+diff --git a/tools/heimdal-gssapi.pc.in b/tools/heimdal-gssapi.pc.in
+index 0af55da..c95b3da 100644
+--- a/tools/heimdal-gssapi.pc.in
++++ b/tools/heimdal-gssapi.pc.in
+@@ -9,5 +9,6 @@ Description: Heimdal is an implementation of Kerberos 5, freely available under
+ Version: @VERSION@
+ URL: http://www.pdc.kth.se/heimdal/
+ Requires: heimdal-krb5
+-Libs: -L${libdir} -lgssapi -lheimntlm @LIB_crypt@
++Libs: -L${libdir} -lgssapi
++Libs.private: -lheimntlm @LIB_crypt@
+ Cflags: -I${includedir}
+diff --git a/tools/heimdal-kadm-server.pc.in b/tools/heimdal-kadm-server.pc.in
+index 575755f..f6297c2 100644
+--- a/tools/heimdal-kadm-server.pc.in
++++ b/tools/heimdal-kadm-server.pc.in
+@@ -7,5 +7,6 @@ Name: heimdal-kadm-server
+ Description: Kadmin server library.
+ Version: @VERSION@
+ Requires: heimdal-gssapi
+-Libs: -L${libdir} -lkadm5srv @LIB_dbopen@
++Libs: -L${libdir} -lkadm5srv
++Libs.private: @LIB_dbopen@
+ Cflags: -I${includedir}
+diff --git a/tools/heimdal-krb5.pc.in b/tools/heimdal-krb5.pc.in
+index d0c1dbb..a1f1399 100644
+--- a/tools/heimdal-krb5.pc.in
++++ b/tools/heimdal-krb5.pc.in
+@@ -7,5 +7,6 @@ vendor=Heimdal
+ Name: heimdal-krb5
+ Description: Heimdal implementation of the Kerberos network authentication.
+ Version: @VERSION@
+-Libs: -L${libdir} -lkrb5 @LIB_pkinit@ -lcom_err @LIB_hcrypto_appl@ -lasn1 -lwind -lheimbase -lroken @LIB_crypt@ @PTHREAD_LIBADD@ @LIB_dlopen@ @LIB_door_create@ @LIBS@
++Libs: -L${libdir} -lkrb5
++Libs.private: @LIB_pkinit@ -lcom_err @LIB_hcrypto_appl@ -lasn1 -lwind -lheimbase -lroken @LIB_crypt@ @PTHREAD_LIBADD@ @LIB_dlopen@ @LIB_door_create@ @LIBS@
+ Cflags: -I${includedir}
+diff --git a/tools/heimdal-gssapi.pc.in b/tools/heimdal-gssapi.pc.in
+index c95b3da..297b61e 100644
+--- a/tools/heimdal-gssapi.pc.in
++++ b/tools/heimdal-gssapi.pc.in
+@@ -8,7 +8,7 @@ Name: @PACKAGE@
+ Description: Heimdal is an implementation of Kerberos 5, freely available under a three clause BSD style license.
+ Version: @VERSION@
+ URL: http://www.pdc.kth.se/heimdal/
+-Requires: heimdal-krb5
++Requires.private: heimdal-krb5
+ Libs: -L${libdir} -lgssapi
+ Libs.private: -lheimntlm @LIB_crypt@
+ Cflags: -I${includedir}
+diff --git a/tools/heimdal-kadm-client.pc.in b/tools/heimdal-kadm-client.pc.in
+index b4aea69..2eb9e3e 100644
+--- a/tools/heimdal-kadm-client.pc.in
++++ b/tools/heimdal-kadm-client.pc.in
+@@ -6,6 +6,6 @@ includedir=@includedir@
+ Name: heimdal-kadm-client
+ Description: Kadmin client library.
+ Version: @VERSION@
+-Requires: heimdal-gssapi
++Requires.private: heimdal-gssapi
+ Libs: -L${libdir} -lkadm5clnt
+ Cflags: -I${includedir}
+diff --git a/tools/heimdal-kadm-server.pc.in b/tools/heimdal-kadm-server.pc.in
+index f6297c2..00a78cc 100644
+--- a/tools/heimdal-kadm-server.pc.in
++++ b/tools/heimdal-kadm-server.pc.in
+@@ -6,7 +6,7 @@ includedir=@includedir@
+ Name: heimdal-kadm-server
+ Description: Kadmin server library.
+ Version: @VERSION@
+-Requires: heimdal-gssapi
++Requires.private: heimdal-gssapi
+ Libs: -L${libdir} -lkadm5srv
+ Libs.private: @LIB_dbopen@
+ Cflags: -I${includedir}
+diff --git a/tools/kadm-client.pc.in b/tools/kadm-client.pc.in
+index 63e1e17..f843885 100644
+--- a/tools/kadm-client.pc.in
++++ b/tools/kadm-client.pc.in
+@@ -7,4 +7,4 @@ vendor=Heimdal
+ Name: kadm-client
+ Description: Kadmin client library.
+ Version: @VERSION@
+-Depends: heimdal-kadm-client
++Requires: heimdal-kadm-client
+diff --git a/tools/kadm-server.pc.in b/tools/kadm-server.pc.in
+index 94d0fd0..9f1e62e 100644
+--- a/tools/kadm-server.pc.in
++++ b/tools/kadm-server.pc.in
+@@ -7,4 +7,4 @@ vendor=Heimdal
+ Name: kadm-server
+ Description: Kadmin server library.
+ Version: @VERSION@
+-Depends: heimdal-kadm-server
++Requires: heimdal-kadm-server
+diff --git a/tools/kafs.pc.in b/tools/kafs.pc.in
+index 77d4a62..bd31f26 100644
+--- a/tools/kafs.pc.in
++++ b/tools/kafs.pc.in
+@@ -6,5 +6,5 @@ includedir=@includedir@
+ Name: kafs
+ Description: Libraries for application that uses kafs.
+ Version: @VERSION@
+-Requires: heimdal-krb5
++Requires.private: heimdal-krb5
+ Libs: -lkafs

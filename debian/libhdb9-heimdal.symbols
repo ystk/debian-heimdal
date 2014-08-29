@@ -1,6 +1,8 @@
 libhdb.so.9 #PACKAGE# #MINVER#
  HDBFlags2int@HEIMDAL_HDB_1.0 1.4.0+git20110226
  HEIMDAL_HDB_1.0@HEIMDAL_HDB_1.0 1.4.0+git20110226
+ _hdb_mdb_value2entry@HEIMDAL_HDB_1.0 1.6~git20131117
+ _hdb_mit_dump2mitdb_entry@HEIMDAL_HDB_1.0 1.6~git20131117
  add_HDB_Ext_KeySet@HEIMDAL_HDB_1.0 1.6~git20120311
  add_Keys@HEIMDAL_HDB_1.0 1.6~git20120311
  asn1_HDBFlags_units@HEIMDAL_HDB_1.0 1.4.0+git20110226
@@ -72,6 +74,7 @@ libhdb.so.9 #PACKAGE# #MINVER#
  hdb_generate_key_set@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_generate_key_set_password@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_get_dbinfo@HEIMDAL_HDB_1.0 1.4.0+git20110226
+ hdb_get_kt_ops@HEIMDAL_HDB_1.0 1.6~git20131117
  hdb_init_db@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_interface_version@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_key2principal@HEIMDAL_HDB_1.0 1.4.0+git20110226
@@ -89,6 +92,7 @@ libhdb.so.9 #PACKAGE# #MINVER#
  hdb_seal_key_mkey@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_seal_keys@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_seal_keys_mkey@HEIMDAL_HDB_1.0 1.4.0+git20110226
+ hdb_set_last_modified_by@HEIMDAL_HDB_1.0 1.6~git20131117
  hdb_set_master_key@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_set_master_keyfile@HEIMDAL_HDB_1.0 1.4.0+git20110226
  hdb_unlock@HEIMDAL_HDB_1.0 1.4.0+git20110226

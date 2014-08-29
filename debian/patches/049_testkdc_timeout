@@ -1,0 +1,22 @@
+commit daefa4f28aad50e489f1173396d6423c677fbecb
+Author: Jelmer Vernooij <jelmer@samba.org>
+Date:   Sat Apr 26 03:02:04 2014 +0200
+
+    Increase timeout when waiting for iprop-slave.
+    
+    This is required when building on slower platforms. We're hitting the
+    timeout building on mips.
+
+diff --git a/tests/kdc/wait-kdc.sh b/tests/kdc/wait-kdc.sh
+index 488d381..5bfa523 100644
+--- a/tests/kdc/wait-kdc.sh
++++ b/tests/kdc/wait-kdc.sh
+@@ -36,7 +36,7 @@ log=${2:-messages.log}
+ waitfor="${3:-${name} started}"
+ 
+ t=0
+-waitsec=35
++waitsec=65
+ 
+ echo "Waiting for ${name} to start, looking logfile ${log}"
+ 

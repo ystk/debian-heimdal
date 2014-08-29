@@ -1,0 +1,86 @@
+Description: link against just build gssapi, instead of the system one
+ this resolves FTBFS when gssapi adds new symbols.
+Author: Dimitri John Ledkov <xnox@ubuntu.com>
+
+--- a/lib/hdb/Makefile.am
++++ b/lib/hdb/Makefile.am
+@@ -45,6 +45,7 @@
+ 	$(LIB_libintl) \
+ 	../krb5/libkrb5.la \
+ 	../asn1/libasn1.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(LIB_roken) \
+ 	$(LIB_ldopen)
+--- a/lib/kadm5/Makefile.am
++++ b/lib/kadm5/Makefile.am
+@@ -131,6 +131,7 @@
+ 	$(top_builddir)/lib/hdb/libhdb.la \
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(LIB_roken) \
+ 	$(DBLIB) \
+@@ -142,6 +143,7 @@
+ 	$(top_builddir)/lib/hdb/libhdb.la \
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/sl/libsl.la \
+ 	$(LIB_readline) \
+--- a/kdc/Makefile.am
++++ b/kdc/Makefile.am
+@@ -83,6 +83,7 @@
+ 	$(top_builddir)/lib/hdb/libhdb.la \
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
+ 	$(LIB_kdb)  \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
+ 	$(LIB_roken) \
+@@ -92,6 +93,7 @@
+ 	$(top_builddir)/lib/hdb/libhdb.la \
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
+ 	$(LIB_kdb)  \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
+ 	$(LIB_roken) \
+@@ -107,6 +109,7 @@
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
+ 	$(LIB_kdb)  \
+ 	$(top_builddir)/lib/ntlm/libheimntlm.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
+ 	$(LIB_roken) \
+@@ -114,6 +117,7 @@
+ 
+ LDADD = $(top_builddir)/lib/hdb/libhdb.la \
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
+ 	$(LIB_roken) \
+--- a/kadmin/Makefile.am
++++ b/kadmin/Makefile.am
+@@ -62,6 +62,7 @@
+ LDADD_common = \
+ 	$(top_builddir)/lib/hdb/libhdb.la \
+ 	$(top_builddir)/lib/krb5/libkrb5.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
+ 	$(LIB_roken) \
+--- a/kpasswd/Makefile.am
++++ b/kpasswd/Makefile.am
+@@ -25,6 +25,7 @@
+ 	$(DBLIB)
+ 
+ LDADD = $(top_builddir)/lib/krb5/libkrb5.la \
++	$(LIB_gssapi) \
+ 	$(LIB_hcrypto) \
+ 	$(top_builddir)/lib/asn1/libasn1.la \
+ 	$(LIB_roken)

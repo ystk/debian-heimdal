@@ -6,7 +6,7 @@ if KCM
 kcm_dir = kcm
 endif
 
-SUBDIRS=  include lib/roken base lib kuser kdc admin kadmin kpasswd 
+SUBDIRS=  include lib kuser kdc admin kadmin kpasswd 
 SUBDIRS+= $(kcm_dir) appl tools tests packages etc po
 
 if HEIMDAL_DOCUMENTATION
@@ -38,6 +38,7 @@ EXTRA_DIST = \
 	autogen.sh \
 	krb5.conf \
 	cf/make-proto.pl \
+	cf/roken-h-process.pl \
 	cf/install-catman.sh \
 	cf/ChangeLog \
 	cf/c-function.m4 \

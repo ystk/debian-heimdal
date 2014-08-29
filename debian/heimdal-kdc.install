@@ -1,3 +1,4 @@
+usr/sbin/digest-service
 usr/sbin/hprop
 usr/sbin/hpropd
 usr/sbin/iprop-log

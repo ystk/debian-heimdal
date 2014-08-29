@@ -110,11 +110,7 @@ in that order.
 2. /var/lib/heimdal-kdc used instead of /var/heimdal
 3. /usr/bin/login moved to /usr/lib/heimdal-servers
 4. /usr/lib/heimdal-servers used instead of /usr/libexec
-5. telnet and ftp have been renamed to ktelnet and kftp, and
-use the update-alternatives mechanism. In the future, this
-should allow heimdal-clients to exist at the same time
-as telnet-ssl.
-6. kdc config files kdc.conf and kadmind.acl stored in
+5. kdc config files kdc.conf and kadmind.acl stored in
 /etc/heimdal-kdc instead of /usr/lib/heimdal-servers.
 
 Automatically creating users

@@ -1,0 +1,37 @@
+commit f8917e6cf42e8a8634a3685ba3763c41b9c051e3
+Author: Jelmer Vernooij <jelmer@samba.org>
+Date:   Fri Feb 28 19:10:42 2014 +0000
+
+    Avoid breaking symbol names for all previously present functions.
+    
+    Signed-off-by: Jelmer Vernooij <jelmer@samba.org>
+
+diff --git a/lib/hx509/version-script.map b/lib/hx509/version-script.map
+index 8f88deb..5c1368a 100644
+--- a/lib/hx509/version-script.map
++++ b/lib/hx509/version-script.map
+@@ -1,6 +1,6 @@
+ # $Id$
+ 
+-HEIMDAL_X509_1.3 {
++HEIMDAL_X509_1.2 {
+ 	global:
+ 		_hx509_cert_assign_key;
+ 		_hx509_cert_private_key;
+@@ -46,7 +46,6 @@ HEIMDAL_X509_1.3 {
+ 		hx509_ca_tbs_set_notBefore;
+ 		hx509_ca_tbs_set_proxy;
+ 		hx509_ca_tbs_set_serialnumber;
+-		hx509_ca_tbs_set_signature_algorithm;
+ 		hx509_ca_tbs_set_spki;
+ 		hx509_ca_tbs_set_subject;
+ 		hx509_ca_tbs_set_template;
+@@ -250,3 +249,8 @@ HEIMDAL_X509_1.3 {
+ 		*;
+ };
+ 
++HEIMDAL_X509_1.3 {
++	global:
++		hx509_ca_tbs_set_signature_algorithm;
++};
++

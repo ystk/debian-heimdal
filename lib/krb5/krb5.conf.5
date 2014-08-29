@@ -261,10 +261,8 @@ If set to "ignore", the framework will ignore any the server input to
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
 .It Li k5login_directory = Va directory
-Alternative location for user .k5login files. Tokens in the form of
-%{luser} are expanded to the name of the user whose .k5login file is
-needed. This option is provided for compatibility with MIT krb5
-configuration files.
+Alternative location for user .k5login files. This option is provided
+for compatibility with MIT krb5 configuration files.
 .It Li k5login_authoritative = Va boolean
 If true then if a principal is not found in k5login files then
 .Xr krb5_userok 3
@@ -297,12 +295,6 @@ argument to
 .Xr krb5_userok 3
 in the given directory or in
 .Pa /etc/k5login.d/ .
-If a directory is given
-then tokens will be expanded; the %{luser} token will be replaced with
-the
-.Va luser
-argument to
-.Xr krb5_userok 3 .
 K5login files are text files, with each line containing just a principal
 name; principals apearing in a user's k5login file are permitted access
 to the user's account. Note: this rule performs no ownership nor
@@ -327,28 +319,9 @@ given principal name, and if found the given username will be used, or,
 if the username is missing, an error will be returned.  If the file
 doesn't exist, or if no matching line is found then other plugins will
 be allowed to run.
-.It Li name_canon_rules = Va rules
-One or more name canonicalization rules.  Each rule consists of one or
-more tokens separated by colon (':').  The first token must be a rule
-type, one of: as-is, qualify, use-resolver-searchlist, or nss.  The
-remaining tokens must be options tokens: secure, ccache_only,
-use_referrals, no_referrals, mindots=
-.Va number
-, domain=
-.Va domain
-, and realm=
-.Va realm.
-These rules are applied to host-based service principal names in order
-until one rule succeeds or all fail.  The as-is rules match on number of
-dots in the hostname or domain suffix of the hostname and attempt the
-hostname as-is on match.  The qualify rules qualify the hostname with
-the given domain (and realm, if given) if necessary and attempt the
-resulting hostname.  The resolver searchlist rule expands to qualify
-rules using the corresponding domainnames from the DNS resolver's
-searchlist.  The "nss" rule performs a hostname lookup.  The secure
-option indicates that an insecure service principal unknown error will
-result in immediate failure.  Name canonicalization is deferred unless
-only the default rule is given.  Default: nss.
+.It Li fcache_strict_checking
+strict checking in FILE credential caches that owner, no symlink and
+permissions is correct.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.
@@ -561,21 +534,21 @@ client's AS-REQ or TGS-REQ enctype list for the ticket session key that
 is supported by the KDC and the target principal when the target
 principal is a krbtgt principal.  Else it will prefer the first key from
 the client's AS-REQ enctype list that is also supported by the KDC and
-the target principal. Defaults to TRUE.
+the target principal.  Defaults to FALSE.
 .It Li svc-use-strongest-session-key = Va BOOL
 Like tgt-use-strongest-session-key, but applies to the session key
 enctype of tickets for services other than krbtgt principals. Defaults
-to TRUE.
+to FALSE.
 .It Li preauth-use-strongest-session-key = Va BOOL
 If TRUE then select the strongest possible enctype from the client's
 AS-REQ for PA-ETYPE-INFO2 (i.e., for password-based pre-authentication).
-Else pick the first supported enctype from the client's AS-REQ. Defaults
-to TRUE.
+Else pick the first supported enctype from the client's AS-REQ.  Defaults
+to FALSE.
 .It Li use-strongest-server-key = Va BOOL
 If TRUE then the KDC picks, for the ticket encrypted part's key, the
 first supported enctype from the target service principal's hdb entry's
 current keyset. Else the KDC picks the first supported enctype from the
-target service principal's hdb entry's current keyset. Defaults to TRUE.
+target service principal's hdb entry's current keyset.  Defaults to TRUE.
 .It Li check-ticket-addresses = Va BOOL
 Verify the addresses in the tickets used in tgs requests.
 .\" XXX
@@ -613,11 +586,44 @@ Should the kdc answer digest requests. The default is FALSE.
 .It Li digests_allowed = Va list of digests
 Specifies the digests the kdc will reply to. The default is
 .Li ntlm-v2 .
+.It Li kx509_ca = Va file
+Specifies the PEM credentials for the kx509 certification authority.
+.It Li require_initial_kca_tickets = Va boolean
+Specified whether to require that tickets for the
+.Li kca_service
+service principal be INITIAL.
+This may be set on a per-realm basis as well as globally.
+Defaults to true for the global setting.
+.It Li kx509_include_pkinit_san = Va boolean
+If true then the kx509 client principal's name and realm will be
+included in an
+.Li id-pkinit-san
+certificate extension.
+This can be set on a per-realm basis as well as globally.
+Defaults to true for the global setting.
+.It Li kx509_template = Va file
+Specifies the PEM file with a template for the certificates to be
+issued.
+The following variables can be interpolated in the subject name using
+${variable} syntax:
+.Bl -tag -width "xxx" -offset indent
+.It principal-name
+The full name of the kx509 client principal.
+.It principal-name-without-realm
+The full name of the kx509 client principal, excluding the realm name.
+.It principal-name-realm
+The name of the client principal's realm.
 .El
+.El
+The 
+.Li kx509 ,
+.Li kx509_template ,
+.Li kx509_include_pkinit_san ,
+and
+.Li require_initial_kca_tickets
+parameters may be set on a per-realm basis as well.
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
-.It Li require-preauth = Va BOOL
-If pre-authentication is required to talk to the kadmin server.
 .It Li password_lifetime = Va time
 If a principal already have its password set for expiration, this is
 the time it will be valid for after a change.
@@ -643,13 +649,20 @@ The Kerberos 5 salt
 The Kerberos 4 salt
 .Va des:pw-salt:
 .El
+.It Li default_key_rules = Va {
+.Bl -tag -width "xxx" -offset indent
+.It Va globing-rule Li = Va keytypes...
+a globbing rule to matching a principal, and when true, use the
+keytypes as specified the same format as [kadmin]default_keys .
+.El
+.It Li }
+.El
 .It Li use_v4_salt = Va BOOL
 When true, this is the same as
 .Pp
 .Va default_keys = Va des3:pw-salt Va v4
 .Pp
 and is only left for backwards compatibility.
-.El
 .It Li [password_quality]
 Check the Password quality assurance in the info documentation for
 more information.
@@ -677,10 +690,6 @@ configuration file for Kerberos 5.
 .Bd -literal -offset indent
 [libdefaults]
 	default_realm = FOO.SE
-	name_canon_rules = as-is:realm=FOO.SE
-	name_canon_rules = qualify:domain=foo.se:realm=FOO.SE
-	name_canon_rules = qualify:domain=bar.se:realm=FOO.SE
-	name_canon_rules = nss
 [domain_realm]
 	.foo.se = FOO.SE
 	.bar.se = FOO.SE
@@ -699,6 +708,10 @@ configuration file for Kerberos 5.
 	kdc = FILE:/var/heimdal/kdc.log
 	kdc = SYSLOG:INFO
 	default = SYSLOG:INFO:USER
+[kadmin]
+	default_key_rules = {
+		*/ppp@* = arcfour-hmac-md5:pw-salt
+	}
 .Ed
 .Sh DIAGNOSTICS
 Since

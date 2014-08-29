@@ -75,10 +75,8 @@ _krb5_HMAC_MD5_checksum(krb5_context context,
     krb5_error_code ret;
 
     m = EVP_MD_CTX_create();
-    if (m == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (m == NULL)
+	return krb5_enomem(context);
     ksign_c.checksum.length = sizeof(ksign_c_data);
     ksign_c.checksum.data   = ksign_c_data;
     ret = _krb5_internal_hmac(context, c, signature, sizeof(signature),
@@ -267,7 +265,7 @@ ARCFOUR_subdecrypt(krb5_context context,
  * draft-brezak-win2k-krb-rc4-hmac-04.txt
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_usage2arcfour(krb5_context context, unsigned *usage)
 {
     switch (*usage) {
@@ -309,6 +307,30 @@ ARCFOUR_encrypt(krb5_context context,
 	return ARCFOUR_subdecrypt (context, key, data, len, keyusage, ivec);
 }
 
+static krb5_error_code
+ARCFOUR_prf(krb5_context context,
+	    krb5_crypto crypto,
+	    const krb5_data *in,
+	    krb5_data *out)
+{
+    struct _krb5_checksum_type *c = _krb5_find_checksum(CKSUMTYPE_SHA1);
+    krb5_error_code ret;
+    Checksum res;
+
+    ret = krb5_data_alloc(out, c->checksumsize);
+    if (ret)
+	return ret;
+
+    res.checksum.data = out->data;
+    res.checksum.length = out->length;
+
+    ret = _krb5_internal_hmac(context, c, in->data, in->length, 0, &crypto->key, &res);
+    if (ret)
+	krb5_data_free(out);
+    return 0;
+}
+
+
 struct _krb5_encryption_type _krb5_enctype_arcfour_hmac_md5 = {
     ETYPE_ARCFOUR_HMAC_MD5,
     "arcfour-hmac-md5",
@@ -322,5 +344,5 @@ struct _krb5_encryption_type _krb5_enctype_arcfour_hmac_md5 = {
     F_SPECIAL,
     ARCFOUR_encrypt,
     0,
-    NULL
+    ARCFOUR_prf
 };

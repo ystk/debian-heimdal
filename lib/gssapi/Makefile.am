@@ -45,7 +45,7 @@ krb5src = \
 	krb5/external.c \
 	krb5/get_mic.c \
 	krb5/gsskrb5_locl.h \
-	krb5/gsskrb5-private.h \
+	$(srcdir)/krb5/gsskrb5-private.h \
 	krb5/import_name.c \
 	krb5/import_sec_context.c \
 	krb5/indicate_mechs.c \
@@ -164,7 +164,7 @@ spnegosrc = \
 	spnego/external.c \
 	spnego/init_sec_context.c \
 	spnego/spnego_locl.h \
-	spnego/spnego-private.h
+	$(srcdir)/spnego/spnego-private.h
 
 ntlmsrc = \
 	ntlm/accept_sec_context.c \
@@ -183,7 +183,6 @@ ntlmsrc = \
 	ntlm/export_sec_context.c \
 	ntlm/external.c \
 	ntlm/ntlm.h \
-	ntlm/ntlm-private.h \
 	ntlm/import_name.c \
 	ntlm/import_sec_context.c \
 	ntlm/indicate_mechs.c \
@@ -199,7 +198,7 @@ ntlmsrc = \
 	ntlm/release_name.c \
 	ntlm/kdc.c
 
-$(srcdir)/ntlm/ntlm-private.h:
+$(srcdir)/ntlm/ntlm-private.h: $(ntlmsrc)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p ntlm/ntlm-private.h $(ntlmsrc) || rm -f ntlm/ntlm-private.h
 
 dist_libgssapi_la_SOURCES  = \
@@ -234,9 +233,9 @@ man_MANS = gssapi.3 gss_acquire_cred.3 mech/mech.5
 include_HEADERS = gssapi.h
 noinst_HEADERS = \
 	gssapi_mech.h \
-	ntlm/ntlm-private.h \
-	spnego/spnego-private.h \
-	krb5/gsskrb5-private.h
+	$(srcdir)/ntlm/ntlm-private.h \
+	$(srcdir)/spnego/spnego-private.h \
+	$(srcdir)/krb5/gsskrb5-private.h
 
 nobase_include_HEADERS = \
 	gssapi/gssapi.h \
@@ -275,8 +274,8 @@ BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
 
 CLEANFILES = $(BUILT_SOURCES) \
 	gkrb5_err.h gkrb5_err.c \
-	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.c \
-	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.c \
+	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.[cx] \
+	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.[cx] \
 	gss-commands.h gss-commands.c
 
 $(spnego_files) spnego_asn1.hx spnego_asn1-priv.hx: spnego_asn1_files

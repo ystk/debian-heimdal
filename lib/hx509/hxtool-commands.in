@@ -409,6 +409,17 @@ command = {
 	help = "Print the OCSP responses"
 }
 command = {
+	name = "revoke-print"
+	option = {
+		long = "verbose"
+		type = "flag"
+		help = "verbose"
+	}
+	min_args="1"
+	argument="ocsp/crl files"
+	help = "Print the OCSP/CRL files"
+}
+command = {
 	name = "request-create"
 	option = {
 		long = "subject"
@@ -622,6 +633,11 @@ command = {
 		long = "lifetime"
 		type = "string"
 		help = "Lifetime of certificate"
+	}
+	option = {
+		long = "signature-algorithm"
+		type = "string"
+		help = "Signature algorithm to use"
 	}
 	option = {
 		long = "serial-number"

@@ -1,0 +1,14 @@
+diff --git a/lib/hdb/hdb-ldap.c b/lib/hdb/hdb-ldap.c
+index 767d88e..caf892e 100644
+--- a/lib/hdb/hdb-ldap.c
++++ b/lib/hdb/hdb-ldap.c
+@@ -44,9 +44,6 @@
+ static krb5_error_code LDAP__connect(krb5_context context, HDB *);
+ static krb5_error_code LDAP_close(krb5_context context, HDB *);
+ 
+-static krb5_error_code hdb_ldap_create(krb5_context context, HDB **, const char *);
+-static krb5_error_code hdb_ldapi_create(krb5_context context, HDB **, const char *);
+-
+ static krb5_error_code
+ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
+ 		   int flags, hdb_entry_ex * ent);

@@ -709,6 +709,7 @@ EXPORTS
 	der_copy_printable_string
 	der_copy_universal_string
 	der_copy_unsigned
+	der_copy_unsigned64
 	der_copy_utctime
 	der_copy_utf8string
 	der_copy_visible_string
@@ -725,6 +726,7 @@ EXPORTS
 	der_free_printable_string
 	der_free_universal_string
 	der_free_unsigned
+	der_free_unsigned64
 	der_free_utctime
 	der_free_utf8string
 	der_free_visible_string
@@ -751,6 +753,7 @@ EXPORTS
 	der_get_type_num
 	der_get_universal_string
 	der_get_unsigned
+	der_get_unsigned64
 	der_get_utctime
 	der_get_utf8string
 	der_get_visible_string
@@ -778,6 +781,7 @@ EXPORTS
 	der_length_tag
 	der_length_universal_string
 	der_length_unsigned
+	der_length_unsigned64
 	der_length_utctime
 	der_length_utf8string
 	der_length_visible_string
@@ -798,7 +802,6 @@ EXPORTS
 	der_put_ia5_string
 	der_put_integer
 	der_put_integer64
-	der_put_integer64
 	der_put_length
 	der_put_length_and_tag
 	der_put_octet_string
@@ -807,6 +810,7 @@ EXPORTS
 	der_put_tag
 	der_put_universal_string
 	der_put_unsigned
+	der_put_unsigned64
 	der_put_utctime
 	der_put_utf8string
 	der_put_visible_string

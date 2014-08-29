@@ -155,7 +155,7 @@ krb5_cc_register(krb5_context context,
  * `ops'. Returns 0 or and error code.
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_cc_allocate(krb5_context context,
 		  const krb5_cc_ops *ops,
 		  krb5_ccache *id)
@@ -383,9 +383,8 @@ krb5_cc_get_full_name(krb5_context context,
     }
 
     if (asprintf(str, "%s:%s", type, name) == -1) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	*str = NULL;
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     return 0;
 }
@@ -407,7 +406,7 @@ krb5_cc_get_ops(krb5_context context, krb5_ccache id)
  * Expand variables in `str' into `res'
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_default_cc_name(krb5_context context, const char *str, char **res)
 {
     return _krb5_expand_path_tokens(context, str, res);
@@ -554,10 +553,8 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	context->default_cc_name_set = 1;
     }
 
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
 
     ret = _krb5_expand_path_tokens(context, p, &exp_p);
     free(p);
@@ -606,10 +603,8 @@ krb5_cc_default(krb5_context context,
 {
     const char *p = krb5_cc_default_name(context);
 
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
     return krb5_cc_resolve(context, p, id);
 }
 
@@ -903,7 +898,7 @@ krb5_cc_copy_match_f(krb5_context context,
     }
 
     while ((ret = krb5_cc_next_cred(context, from, &cursor, &cred)) == 0) {
-	   if (match == NULL || (*match)(context, matchctx, &cred) == 0) {
+	   if (match == NULL || (*match)(context, matchctx, &cred)) {
 	       if (matched)
 		   (*matched)++;
 	       ret = krb5_cc_store_cred(context, to, &cred);
@@ -984,12 +979,20 @@ krb5_cc_get_prefix_ops(krb5_context context, const char *prefix)
 
     if (prefix == NULL)
 	return KRB5_DEFAULT_CCTYPE;
-    if (prefix[0] == '/')
+
+    /* Is absolute path? Or UNC path? */
+    if (ISPATHSEP(prefix[0]))
 	return &krb5_fcc_ops;
+
+#ifdef _WIN32
+    /* Is drive letter? */
+    if (isalpha(prefix[0]) && prefix[1] == ':')
+	return &krb5_fcc_ops;
+#endif
 
     p = strdup(prefix);
     if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
+	krb5_enomem(context);
 	return NULL;
     }
     p1 = strchr(p, ':');
@@ -1053,10 +1056,8 @@ krb5_cc_cache_get_first (krb5_context context,
     }
 
     *cursor = calloc(1, sizeof(**cursor));
-    if (*cursor == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*cursor == NULL)
+	return krb5_enomem(context);
 
     (*cursor)->ops = ops;
 
@@ -1134,6 +1135,7 @@ krb5_cc_cache_match (krb5_context context,
     krb5_cccol_cursor cursor;
     krb5_error_code ret;
     krb5_ccache cache = NULL;
+    krb5_ccache expired_match = NULL;
 
     *id = NULL;
 
@@ -1141,26 +1143,46 @@ krb5_cc_cache_match (krb5_context context,
     if (ret)
 	return ret;
 
-    while (krb5_cccol_cursor_next (context, cursor, &cache) == 0 && cache != NULL) {
+    while (krb5_cccol_cursor_next(context, cursor, &cache) == 0 && cache != NULL) {
 	krb5_principal principal;
+	krb5_boolean match;
+	time_t lifetime;
 
 	ret = krb5_cc_get_principal(context, cache, &principal);
-	if (ret == 0) {
-	    krb5_boolean match;
+	if (ret)
+	    goto next;
 
+	if (client->name.name_string.len == 0)
+	    match = (strcmp(client->realm, principal->realm) == 0);
+	else
 	    match = krb5_principal_compare(context, principal, client);
-	    krb5_free_principal(context, principal);
-	    if (match)
-		break;
-	}
+	krb5_free_principal(context, principal);
+	
+	if (!match)
+	    goto next;
 
-	krb5_cc_close(context, cache);
+	if (expired_match == NULL &&
+	    (krb5_cc_get_lifetime(context, cache, &lifetime) != 0 || lifetime == 0)) {
+	    expired_match = cache;
+	    cache = NULL;
+	    goto next;
+	}
+	break;
+
+    next:
+        if (cache)
+	    krb5_cc_close(context, cache);
 	cache = NULL;
     }
 
     krb5_cccol_cursor_free(context, &cursor);
 
-    if (cache == NULL) {
+    if (cache == NULL && expired_match) {
+	cache = expired_match;
+	expired_match = NULL;
+    } else if (expired_match) {
+	krb5_cc_close(context, expired_match);
+    } else if (cache == NULL) {
 	char *str;
 
 	krb5_unparse_name(context, client, &str);
@@ -1173,6 +1195,7 @@ krb5_cc_cache_match (krb5_context context,
 	    free(str);
 	return KRB5_CC_NOTFOUND;
     }
+
     *id = cache;
 
     return 0;
@@ -1388,10 +1411,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cccol_cursor_new(krb5_context context, krb5_cccol_cursor *cursor)
 {
     *cursor = calloc(1, sizeof(**cursor));
-    if (*cursor == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*cursor == NULL)
+	return krb5_enomem(context);
     (*cursor)->idx = 0;
     (*cursor)->cursor = NULL;
 
@@ -1577,10 +1598,9 @@ krb5_cc_get_friendly_name(krb5_context context,
     } else {
 	ret = asprintf(name, "%.*s", (int)data.length, (char *)data.data);
 	krb5_data_free(&data);
-	if (ret <= 0) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
-	} else
+	if (ret <= 0)
+	    ret = krb5_enomem(context);
+	else
 	    ret = 0;
     }
 
@@ -1629,7 +1649,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
     krb5_cc_cursor cursor;
     krb5_error_code ret;
     krb5_creds cred;
-    time_t now;
+    time_t now, endtime = 0;
 
     *t = 0;
     now = time(NULL);
@@ -1639,15 +1659,38 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	return ret;
 
     while ((ret = krb5_cc_next_cred(context, id, &cursor, &cred)) == 0) {
-	if (cred.flags.b.initial) {
+	/**
+	 * If we find a krbtgt in the cache, use that as the lifespan.
+	 */
+	if (krb5_principal_is_root_krbtgt(context, cred.client)) {
 	    if (now < cred.times.endtime)
-		*t = cred.times.endtime - now;
+		endtime = cred.times.endtime;
 	    krb5_free_cred_contents(context, &cred);
 	    break;
 	}
+	/*
+	 * Skip config entries
+	 */
+	if (krb5_is_config_principal(context, cred.server)) {
+	    krb5_free_cred_contents(context, &cred);
+	    continue;
+	}
+	/**
+	 * If there was no krbtgt, use the shortest lifetime of
+	 * service tickets that have yet to expire.  If all
+	 * credentials are expired, krb5_cc_get_lifetime() will fail.
+	 */
+	if ((endtime == 0 || cred.times.endtime < endtime) && now < cred.times.endtime)
+	    endtime = cred.times.endtime;
 	krb5_free_cred_contents(context, &cred);
     }
 
+    /* if we found an endtime use that */
+    if (endtime) {
+	*t = endtime - now;
+	ret = 0;
+    }
+    
     krb5_cc_end_seq_get(context, id, &cursor);
 
     return ret;
@@ -1706,7 +1749,7 @@ krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset
 #ifdef _WIN32
 
 #define REGPATH_MIT_KRB5 "SOFTWARE\\MIT\\Kerberos5"
-char *
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 _krb5_get_default_cc_name_from_registry(krb5_context context)
 {
     HKEY hk_k5 = 0;
@@ -1728,7 +1771,7 @@ _krb5_get_default_cc_name_from_registry(krb5_context context)
     return ccname;
 }
 
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
 {
     HKEY hk_k5 = 0;

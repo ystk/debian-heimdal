@@ -4,8 +4,6 @@
 remove_servers() {
 	update-inetd --remove 'kshell[ \t].*[ \t]/usr/lib/heimdal-servers/rshd'
 	update-inetd --remove 'ftp[ \t].*[ \t]/usr/lib/heimdal-servers/ftpd'
-	update-inetd --remove 'telnet[ \t].*[ \t]/usr/lib/heimdal-servers/telnetd'
-	update-inetd --remove 'pop-3[ \t].*[ \t]/usr/lib/heimdal-servers/popper'
 }
 
 case "$1" in

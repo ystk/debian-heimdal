@@ -1,3 +1,138 @@
+heimdal (1.6~rc2+dfsg-8) unstable; urgency=low
+
+  * Add branch to Vcs-Git header. Closes: #753843
+  * Add note in lintian-overrides about rfc3492. Closes: #753841
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sat, 05 Jul 2014 21:18:49 +0200
+
+heimdal (1.6~rc2+dfsg-7) unstable; urgency=medium
+
+  * Use alternatives for kpasswd, ksu, kdestroy, kswitch, kadmin and ktutil.
+    + Allows installation together with krb5-user. Closes: #482528
+  * Move kadmin and ktutil from /usr/sbin to /usr/bin. Closes: #168170
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 01 Jun 2014 21:55:06 +0200
+
+heimdal (1.6~rc2+dfsg-6) unstable; urgency=medium
+
+  * Remove duplicate dependency on ${misc:Depends} in heimdal-dev.
+  * Use canonical URL in Vcs-Git header.
+  * Drop conflicts with rsh-client in heimdal-clients, as rsh is no
+    longer shipped.
+  * Add 049_testkdc_timeout: Extend timeout waiting for iprop slave to
+    come up during tests. Closes: #745683
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Fri, 25 Apr 2014 02:30:19 +0200
+
+heimdal (1.6~rc2+dfsg-5) unstable; urgency=medium
+
+  * Restrict flags output by pkg-config further. (#745543)
+  * Drop unnecessary build conflict with heimdal-dev.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Wed, 23 Apr 2014 02:21:25 +0200
+
+heimdal (1.6~rc2+dfsg-4) unstable; urgency=medium
+
+  * Fix use of as-needed linker flag.
+  * Prevent build errors when system gssapi library has extra symbols.
+    Thanks Dimitri John Ledkov. Closes: #745545
+  * Enable parallel build. Thanks Dimitri John Ledkov. Closes: #745508
+  * Don't list libraries not required for dynamic linking in .pc files.
+    Closes: #745543
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 21 Apr 2014 18:15:02 +0200
+
+heimdal (1.6~rc2+dfsg-3) unstable; urgency=medium
+
+  * Use alternatives for klist and kinit. Closes: #205498
+  * Add lintian-override for license warning of multi-license RFC 3492.
+  * Enable running of testsuite during build.
+  * Add unzip (for unzip binary) and netbase (for /etc/services) build
+    dependencies, required for testsuite.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 20 Apr 2014 22:52:30 +0200
+
+heimdal (1.6~rc2+dfsg-2) unstable; urgency=medium
+
+  * Add 046_hurd_sundevdata: Fix definition of _IOT_sundevdata for GNU
+    Hurd. Thanks, Svante Signell. Closes: #738669
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sat, 01 Mar 2014 17:48:26 +0000
+
+heimdal (1.6~rc2+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot.
+   + Removes telnet, rsh and pop implementations.
+    - Drop 027_rsh_use_ktelnet patch.
+   + Drop 045_kadm_pcfile, now included upstream.
+   + Drop 046_kcm_supports_sigterm, now included upstream.
+   + Drop 047_fix_hdb_so_loading, now included upstream.
+  * Add 045_hx509_symbol_names: prevent symbol renames.
+  * Source lsb functions in init scripts.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 23 Feb 2014 19:28:46 +0000
+
+heimdal (1.6~git20131207+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot from 1.6 branch.
+   + Drop 043_hx509_heimbase: applied upstream.
+   + Drop 044_krb5_pcfile: applied upstream.
+  * Add 046_kcm_supports_sigterm. Closes: #654349
+  * Add Provides: heimdal-hdb-api-8 to hdb package, so Samba and others can
+    depend on a specific version of the API.
+  * Add 047_fix_hdb_so_loading, fixing plugin loading
+    in the HDB library. Thanks Andrew Bartlett, Jeff Clark.
+  * Bump standards version to 3.9.5. (no changes)
+  * Document log destination format in kdc.conf rather than referring to
+    krb5_openlog.3 manpage shipped in heimdal-dev. Closes: #674542
+  * Drop obsolete bzr-builddeb.conf.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sat, 07 Dec 2013 13:32:43 +0000
+
+heimdal (1.6~git20131117+dfsg-3) unstable; urgency=low
+
+  * Move generic .pc files from heimdal-multidev to heimdal-dev package
+    to prevent conflicts with libkrb5-multidev. Closes: #730267
+  * Rename login.1 to login.heimdal.1 to support installing together
+    with login. Closes: #729946
+  * Set random master key if no explicit password was specified. Closes:
+    #730011
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 24 Nov 2013 14:59:33 +0000
+
+heimdal (1.6~git20131117+dfsg-2) unstable; urgency=low
+
+  * Move asn1_compile and asn1_print to heimdal-multidev, since they
+    don't conflict with libkrb5-dev.
+  * Add 043_hx509_heimbase: fixes use of hx509.h.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Wed, 20 Nov 2013 01:22:08 +0000
+
+heimdal (1.6~git20131117+dfsg-1) unstable; urgency=low
+
+  * New upstream snapshot.
+   + Drop texinfo_5.1 and texinfo_b_5.1; applied upstream.
+  * Install asn1_compile and asn1_print binaries in heimdal-dev.
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Sun, 17 Nov 2013 15:06:09 +0000
+
+heimdal (1.6~git20120403+dfsg1-4) unstable; urgency=low
+
+  * Fix broken symlinks. Closes: #715069.
+    * heimdal-multidev depends on libotp0-heimdal and libsl0-heimdal.
+    * remove windc symlinks.
+  * Bump standards version to 3.9.4.
+
+ -- Brian May <bam@debian.org>  Tue, 16 Jul 2013 09:25:53 +1000
+
+heimdal (1.6~git20120403+dfsg1-3) unstable; urgency=low
+
+  * Move /usr/share/doc/heimdal-kdc/examples to
+    /usr/share/heimdal-kdc. Closes: #710731.
+  * Fix textinfo build errors. Closes: #711221.
+
+ -- Brian May <bam@debian.org>  Mon, 03 Jun 2013 12:06:56 +1000
+
 heimdal (1.6~git20120403+dfsg1-2) unstable; urgency=low
 
   * Enable libcap-ng-dev only on Linux. Fixes FTBFS on kfreebsd-* and

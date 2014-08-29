@@ -1,16 +1,3 @@
-=== modified file 'appl/telnet/telnetd/telnetd.h'
---- old/appl/telnet/telnetd/telnetd.h	2011-07-20 16:16:05 +0000
-+++ new/appl/telnet/telnetd/telnetd.h	2011-07-20 16:18:20 +0000
-@@ -212,7 +212,7 @@
- #endif
- 
- #undef _PATH_LOGIN
--#define _PATH_LOGIN	BINDIR "/login"
-+#define _PATH_LOGIN	"/bin/login"
- 
- /* fallbacks */
- 
-
 === modified file 'doc/setup.texi'
 --- old/doc/setup.texi	2011-07-20 16:16:05 +0000
 +++ new/doc/setup.texi	2011-07-20 16:18:20 +0000

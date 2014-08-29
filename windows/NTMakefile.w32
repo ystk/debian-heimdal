@@ -80,7 +80,7 @@ OBJDIR		=$(SRC)\out\obj_$(CPU)
 INCDIR		=$(DESTDIR)\inc
 LIBDIR		=$(DESTDIR)\lib
 BINDIR		=$(DESTDIR)\bin
-PLUGINDIR	=$(BINDIR)\plugin\krb5
+PLUGINDIR	=$(BINDIR)
 DOCDIR		=$(DESTDIR)\doc
 SBINDIR		=$(BINDIR)
 LIBEXECDIR	=$(BINDIR)
@@ -164,6 +164,7 @@ cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
 cdebug=$(cdebug) /Zi
 ldebug=$(ldebug) /DEBUG
+localcflags=$(localcflags) /Oy-
 
 # Disable warnings:
 #
@@ -371,38 +372,38 @@ announce-tools:
 prep:: mkdirs
 
 mkdirs:
-!  if !exist($(OBJ))
-	$(MKDIR) $(OBJ)
+!  if !exist("$(OBJ)")
+	-$(MKDIR) "$(OBJ)"
 !  endif
-!  if !exist($(DESTDIR))
-	$(MKDIR) $(DESTDIR)
+!  if !exist("$(DESTDIR)")
+	-$(MKDIR) "$(DESTDIR)"
 !  endif
-!  if !exist($(LIBDIR))
-	$(MKDIR) $(LIBDIR)
+!  if !exist("$(LIBDIR)")
+	-$(MKDIR) "$(LIBDIR)"
 !  endif
-!  if !exist($(BINDIR))
-	$(MKDIR) $(BINDIR)
+!  if !exist("$(BINDIR)")
+	-$(MKDIR) "$(BINDIR)"
 !  endif
-!  if !exist($(PLUGINDIR))
-	$(MKDIR) $(PLUGINDIR)
+!  if !exist("$(PLUGINDIR)")
+	-$(MKDIR) "$(PLUGINDIR)"
 !  endif
-!  if !exist($(INCDIR))
-	$(MKDIR) $(INCDIR)
+!  if !exist("$(INCDIR)")
+	-$(MKDIR) "$(INCDIR)"
 !  endif
-!  if !exist($(DOCDIR))
-	$(MKDIR) $(DOCDIR)
+!  if !exist("$(DOCDIR)")
+	-$(MKDIR) "$(DOCDIR)"
 !  endif
-!  if !exist($(INCDIR)\gssapi)
-	$(MKDIR) $(INCDIR)\gssapi
+!  if !exist("$(INCDIR)\gssapi")
+	-$(MKDIR) "$(INCDIR)\gssapi"
 !  endif
-!  if !exist($(INCDIR)\hcrypto)
-	$(MKDIR) $(INCDIR)\hcrypto
+!  if !exist("$(INCDIR)\hcrypto")
+	-$(MKDIR) "$(INCDIR)\hcrypto"
 !  endif
-!  if !exist($(INCDIR)\kadm5)
-	$(MKDIR) $(INCDIR)\kadm5
+!  if !exist("$(INCDIR)\kadm5")
+	-$(MKDIR) "$(INCDIR)\kadm5"
 !  endif
-!  if !exist($(INCDIR)\krb5)
-	$(MKDIR) $(INCDIR)\krb5
+!  if !exist("$(INCDIR)\krb5")
+	-$(MKDIR) "$(INCDIR)\krb5"
 !  endif
 
 #----------------------------------------------------------------------
@@ -510,28 +511,48 @@ _CODESIGN=( echo Skipping code sign )
 !endif
 
 #----------------------------------------------------------------------
+# Symbol Store Support
+#
+# SYMSTORE_EXE is full path to symstore.exe
+#
+# SYMSTORE_ROOT is full path to root directory of symbol store
+#
+# SYMSTORE_COMMENT is optional comment to include in symbol store catalog entry
+#
+
+!IF DEFINED(SYMSTORE_EXE) && DEFINED(SYMSTORE_ROOT)
+!IF "$(SYMSTORE_COMMENT)" != ""
+SYMSTORE_COMMENT = |$(SYMSTORE_COMMENT)
+!ENDIF
+SYMSTORE_IMPORT= \
+$(SYMSTORE_EXE) add /s $(SYMSTORE_ROOT) /t "Heimdal" /v "$(BUILD)-$(CPU)-$(VER_PACKAGE_VERSION)" /c "$(@F)$(SYMSTORE_COMMENT)" /f $*.*
+!ELSE
+SYMSTORE_IMPORT=@echo No symbol store
+!ENDIF
+
+#----------------------------------------------------------------------
 # Convenience macros for preparing EXEs and DLLs.  These are multiline
 # macros that deal with manifests and code signing.  Unless we need to
 # include custom manifests, these are what we should be using to
 # prepare binaries.
 
 EXEPREP=\
-( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 EXEPREP_NOHEIM=\
-( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 EXEPREP_NODIST=\
-( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP=\
-( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP_NODIST=\
-( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP_MERGE=\
-( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) ) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) && $(SYMSTORE_IMPORT) ) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 #----------------------------------------------------------------------
 # Convenience macros for import libraries and assemblies
@@ -561,7 +582,19 @@ LIBSQLITE   =$(LIBDIR)\libsqlite.lib
 LIBVERS	    =$(LIBDIR)\libvers.lib
 LIBWIND	    =$(LIBDIR)\libwind.lib
 
-ASMKRBNAME  =Heimdal.Kerberos
-ASMGSSNAME  =Heimdal.GSSAPI
+!ifdef VER_DEBUG
+ASM_DBG=.Debug
+!endif
+!ifdef VER_PRERELEASE
+ASM_PRE=.Pre
+!endif
+!ifdef VER_PRIVATE
+ASM_PVT=.Private
+!endif
+!ifdef VER_SPECIAL
+ASM_SPC=.Special
+!endif
+
+ASMKRBNAME  =Heimdal.Kerberos$(ASM_SPC)$(ASM_PVT)$(ASM_PRE)$(ASM_DBG)
 APPMANIFEST =$(INCDIR)\Heimdal.Application.$(MCPU).manifest
 

@@ -68,8 +68,12 @@ switch_environment(void)
     if ((runas_string || chroot_string) && geteuid() != 0)
 	errx(1, "no running as root, can't switch user/chroot");
 
-    if (chroot_string && chroot(chroot_string) != 0)
-	errx(1, "chroot(%s)", "chroot_string failed");
+    if (chroot_string) {
+	if (chroot(chroot_string))
+	    err(1, "chroot(%s) failed", chroot_string);
+	if (chdir("/"))
+	    err(1, "chdir(/) after chroot failed");
+    }
 
     if (runas_string) {
 	struct passwd *pw;
@@ -118,7 +122,7 @@ main(int argc, char **argv)
     else if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if (ret)
 	errx (1, "krb5_kt_register(HDB) failed: %d", ret);
 

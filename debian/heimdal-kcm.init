@@ -16,6 +16,13 @@ KCM_PARAMS="--detach"
 
 test -f $KCM_DAEMON || exit 0
 
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
 set -e
 
 case "$1" in

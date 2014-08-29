@@ -615,7 +615,13 @@ verify_logonname(krb5_context context,
 	uint64_t t1, t2;
 	t1 = unix2nttime(authtime);
 	t2 = ((uint64_t)time2 << 32) | time1;
-	if (t1 != t2) {
+	/*
+	 * When neither the ticket nor the PAC set an explicit authtime,
+	 * both times are zero, but relative to different time scales.
+	 * So we must compare "not set" values without converting to a
+	 * common time reference.
+         */
+	if (t1 != t2 && (t2 != 0 && authtime != 0)) {
 	    krb5_storage_free(sp);
 	    krb5_set_error_message(context, EINVAL, "PAC timestamp mismatch");
 	    return EINVAL;
@@ -733,8 +739,8 @@ build_logon_name(krb5_context context,
 
 	ret = wind_utf8ucs2_length(s, &ucs2_len);
 	if (ret) {
+	    krb5_set_error_message(context, ret, "Principal %s is not valid UTF-8", s);
 	    free(s);
-	    krb5_set_error_message(context, ret, "Failed to count length of UTF-8 string");
 	    return ret;
 	}
 
@@ -745,12 +751,13 @@ build_logon_name(krb5_context context,
 	}
 
 	ret = wind_utf8ucs2(s, ucs2, &ucs2_len);
-	free(s);
 	if (ret) {
 	    free(ucs2);
-	    krb5_set_error_message(context, ret, "Failed to convert string to UCS-2");
+	    krb5_set_error_message(context, ret, "Principal %s is not valid UTF-8", s);
+	    free(s);
 	    return ret;
-	}
+	} else 
+	    free(s);
 
 	s2_len = (ucs2_len + 1) * 2;
 	s2 = malloc(s2_len);
@@ -948,7 +955,7 @@ pac_checksum(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pac_sign(krb5_context context,
 	       krb5_pac p,
 	       time_t authtime,

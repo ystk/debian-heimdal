@@ -7,10 +7,16 @@ if [ -z "$1" ]; then
 else
 	version="$1"
 fi
+if [ -z "$2" ]; then
+	branch=master
+else
+	branch="$2"
+fi
 scriptdir=`dirname $0`
 
 CHECKOUT_DIR="heimdal-$version"
 git clone --depth 1 -l git://github.com/heimdal/heimdal "$CHECKOUT_DIR"
+cd "$CHECKOUT_DIR" && git checkout "$BRANCH" && cd ..
 `dirname $0`/fix_git_source "$CHECKOUT_DIR"
 rm -rf "$CHECKOUT_DIR/.git"
 tar cz "$CHECKOUT_DIR" > "heimdal_$version.orig.tar.gz"

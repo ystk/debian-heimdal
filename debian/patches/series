@@ -5,9 +5,16 @@ nfs_des
 024_rxtelnet
 025_krb5-config-paths
 025_pthreads
-027_rsh_use_ktelnet
 030_pkg-config-paths
 031_libedit
 041_hurd_maxhostnamelen
 installsh
 042_hurd_path_max
+043_clean_headers
+044_hdb_ldap_static
+045_hx509_symbol_names
+046_hurd_sundevdata
+047_link_gssapi
+048_private_libs
+049_testkdc_timeout
+050_kadmin_to_usr_bin

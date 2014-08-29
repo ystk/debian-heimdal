@@ -395,6 +395,7 @@ receive_everything (krb5_context context, int fd,
 	krb5_err (context, 1, ret, "db->open");
 
     sp = NULL;
+    krb5_data_zero(&data);
     do {
 	ret = krb5_read_priv_message(context, auth_context, &fd, &data);
 
@@ -502,7 +503,7 @@ is_up_to_date(krb5_context context, const char *file,
 	unlink(file);
 	return;
     }
-    slave_status(context, file, "up-to-date with version: %lu at %s\n",
+    slave_status(context, file, "up-to-date with version: %lu at %s",
 		 (unsigned long)server_context->log_context.version, buf);
 }
 
@@ -566,7 +567,6 @@ main(int argc, char **argv)
     time_t reconnect_max;
     time_t reconnect;
     time_t before = 0;
-    int aret;
 
     const char *master;
 
@@ -616,11 +616,9 @@ main(int argc, char **argv)
 	    krb5_errx(context, 1, "can't allocate status file buffer"); 
     }
 
-    slave_status(context, status_file, "bootstrapping\n");
-
 #ifdef SUPPORT_DETACH
     if (detach_from_console){
-	aret = daemon(0, 0);
+	int aret = daemon(0, 0);
 	if (aret == -1) {
 	    /* not much to do if detaching fails... */
 	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
@@ -631,7 +629,9 @@ main(int argc, char **argv)
     krb5_openlog (context, "ipropd-slave", &log_facility);
     krb5_set_warn_dest(context, log_facility);
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    slave_status(context, status_file, "bootstrapping");
+
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if(ret)
 	krb5_err(context, 1, ret, "krb5_kt_register");
 
@@ -639,7 +639,7 @@ main(int argc, char **argv)
     if (time_before_lost < 0)
 	krb5_errx (context, 1, "couldn't parse time: %s", server_time_lost);
 
-    slave_status(context, status_file, "getting credentials from keytab/database\n");
+    slave_status(context, status_file, "getting credentials from keytab/database");
 
     memset(&conf, 0, sizeof(conf));
     if(realm) {
@@ -657,7 +657,7 @@ main(int argc, char **argv)
 
     server_context = (kadm5_server_context *)kadm_handle;
 
-    slave_status(context, status_file, "creating log file\n");
+    slave_status(context, status_file, "creating log file");
 
     ret = kadm5_log_init (server_context);
     if (ret)
@@ -680,6 +680,8 @@ main(int argc, char **argv)
     krb5_appdefault_time(context, config_name, NULL, "reconnect-backoff",
 			 10, &backoff);
     reconnect = reconnect_min;
+
+    slave_status(context, status_file, "ipropd-slave started");
 
     while (!exit_flag) {
 	time_t now, elapsed;
@@ -729,7 +731,7 @@ main(int argc, char **argv)
 
 	connected = TRUE;
 
-	slave_status(context, status_file, "connected to master, waiting instructions\n");
+	slave_status(context, status_file, "connected to master, waiting instructions");
 
 	while (connected && !exit_flag) {
 	    krb5_data out;
@@ -757,9 +759,12 @@ main(int argc, char **argv)
 		else
 		    krb5_err (context, 1, errno, "select");
 	    }
-	    if (ret == 0)
-		krb5_errx (context, 1, "server didn't send a message "
+	    if (ret == 0) {
+		krb5_warn (context, 1, "server didn't send a message "
 			   "in %d seconds", time_before_lost);
+		connected = FALSE;
+		continue;
+	    }
 
 	    ret = krb5_read_priv_message(context, auth_context, &master_fd, &out);
 	    if (ret) {

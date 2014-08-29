@@ -81,11 +81,8 @@ krb5_copy_ticket(krb5_context context,
 
     *to = NULL;
     tmp = malloc(sizeof(*tmp));
-    if(tmp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (tmp == NULL)
+	return krb5_enomem(context);
     if((ret = copy_EncTicketPart(&from->ticket, &tmp->ticket))){
 	free(tmp);
 	return ret;
@@ -324,6 +321,37 @@ out:
     }
     return ret;
 }
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_get_ad(krb5_context context,
+	     const AuthorizationData *ad,
+	     krb5_keyblock *sessionkey,
+	     int type,
+	     krb5_data *data)
+{
+    krb5_boolean found = FALSE;
+    krb5_error_code ret;
+
+    krb5_data_zero(data);
+
+    if (ad == NULL) {
+	krb5_set_error_message(context, ENOENT,
+			       N_("No authorization data", ""));
+	return ENOENT; /* XXX */
+    }
+
+    ret = find_type_in_ad(context, type, data, &found, TRUE, sessionkey, ad, 0);
+    if (ret)
+	return ret;
+    if (!found) {
+	krb5_set_error_message(context, ENOENT,
+			       N_("Have no authorization data of type %d", ""),
+			       type);
+	return ENOENT; /* XXX */
+    }
+    return 0;
+}
+
 
 /**
  * Extract the authorization data type of type from the ticket. Store
@@ -648,7 +676,7 @@ decrypt_tkt (krb5_context context,
     return 0;
 }
 
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 _krb5_extract_ticket(krb5_context context,
 		     krb5_kdc_rep *rep,
 		     krb5_creds *creds,

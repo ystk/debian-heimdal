@@ -291,7 +291,7 @@ fail:
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_krbtgt(krb5_context context,
 		 krb5_ccache  id,
 		 krb5_realm realm,
@@ -702,7 +702,10 @@ find_cred(krb5_context context,
 
     krb5_cc_clear_mcred(&mcreds);
     mcreds.server = server;
-    ret = krb5_cc_retrieve_cred(context, id, KRB5_TC_DONT_MATCH_REALM,
+    krb5_timeofday(context, &mcreds.times.endtime);
+    ret = krb5_cc_retrieve_cred(context, id,
+				KRB5_TC_DONT_MATCH_REALM |
+				KRB5_TC_MATCH_TIMES,
 				&mcreds, out_creds);
     if(ret == 0)
 	return 0;
@@ -983,11 +986,13 @@ get_cred_kdc_referral(krb5_context context,
 	krb5_creds mcreds;
 	char *referral_realm;
 
-	/* Use cache if we are not doing impersonation or contrainte deleg */
+	/* Use cache if we are not doing impersonation or contrained deleg */
 	if (impersonate_principal == NULL || flags.b.constrained_delegation) {
 	    krb5_cc_clear_mcred(&mcreds);
 	    mcreds.server = referral.server;
-	    ret = krb5_cc_retrieve_cred(context, ccache, 0, &mcreds, &ticket);
+	    krb5_timeofday(context, &mcreds.times.endtime);
+	    ret = krb5_cc_retrieve_cred(context, ccache, KRB5_TC_MATCH_TIMES,
+					&mcreds, &ticket);
 	} else
 	    ret = EINVAL;
 
@@ -1078,7 +1083,7 @@ out:
  * codebase.
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_cred_kdc_any(krb5_context context,
 		       krb5_kdc_flags flags,
 		       krb5_ccache ccache,
@@ -1122,38 +1127,27 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
 	 krb5_creds *in_creds, krb5_creds *out_creds)
 {
     krb5_error_code ret;
-    krb5_timestamp timeret;
+    krb5_timestamp now;
+    krb5_times save_times;
 
-    /*
-     * If we got a credential, check if credential is expired before
-     * returning it.
-     */
+    save_times = in_creds->times;
+
+    krb5_timeofday(context, &now);
+
+    if (!(options & KRB5_GC_EXPIRED_OK) &&
+	in_creds->times.endtime < now) {
+	in_creds->times.renew_till = 0;
+	krb5_timeofday(context, &in_creds->times.endtime);
+	options |= KRB5_TC_MATCH_TIMES;
+    }
     ret = krb5_cc_retrieve_cred(context, ccache,
-				options & KRB5_TC_MATCH_KEYTYPE,
-                                in_creds, out_creds);
-    if (ret != 0)
-	return ret; /* Caller will check for KRB5_CC_END */
+				(options &
+				 (KRB5_TC_MATCH_KEYTYPE |
+				  KRB5_TC_MATCH_TIMES)),
+				in_creds, out_creds);
 
-    /*
-     * If we got a credential, check if credential is expired before
-     * returning it, but only if KRB5_GC_EXPIRED_OK is not set.
-     */
-
-    /* If expired ok, don't bother checking */
-    if (options & KRB5_GC_EXPIRED_OK)
-	return 0;
-
-    krb5_timeofday(context, &timeret);
-    if (out_creds->times.endtime > timeret)
-	return 0;
-
-    /* Expired and not ok; remove and pretend we didn't find it */
-    if (options & KRB5_GC_CACHED)
-	krb5_cc_remove_cred(context, ccache, 0, out_creds);
-
-    krb5_free_cred_contents(context, out_creds);
-    memset(out_creds, 0, sizeof (*out_creds));
-    return KRB5_CC_END;
+    in_creds->times = save_times;
+    return ret;
 }
 
 static void
@@ -1223,7 +1217,7 @@ krb5_get_credentials_with_flags(krb5_context context,
 
 next_rule:
     krb5_free_cred_contents(context, res_creds);
-    memset(res_creds, 0, sizeof (res_creds));
+    memset(res_creds, 0, sizeof (*res_creds));
     ret = krb5_name_canon_iterate_creds(context, &name_canon_iter, &try_creds,
 					&rule_opts);
     if (ret)
@@ -1487,8 +1481,9 @@ next_rule:
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,
-				 try_creds, opt->self, opt->ticket,
-				 out_creds, &tgts);
+				 try_creds, opt ? opt->self : 0,
+				 opt ? opt->ticket : 0, out_creds,
+				 &tgts);
     for(i = 0; tgts && tgts[i]; i++) {
 	krb5_cc_store_cred(context, ccache, tgts[i]);
 	krb5_free_creds(context, tgts[i]);

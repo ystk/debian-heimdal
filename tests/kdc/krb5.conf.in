@@ -98,12 +98,25 @@
 	iprop-stats = @objdir@/iprop-stats
 	iprop-acl = @srcdir@/iprop-acl
 
+[hdb]
+	db-dir = @objdir@
+
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
+	krb5 = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log
+
+# If you are doing preformance measurements on OSX you want to change
+# the kdc LOG line from = to - below to keep the FILE open and avoid
+# open/write/close which is blocking (rdar:// ) on OSX.
+#	kdc = 0-/FILE=@objdir@/messages.log
 
 [kadmin]
 	save-password = true
+	default_key_rules = {
+		*/des3-only@* = des3-cbc-sha1:pw-salt
+		*/aes-only@* = aes256-cts-hmac-sha1-96:pw-salt
+	}
 	@dk@
 
 [capaths]

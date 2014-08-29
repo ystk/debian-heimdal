@@ -30,7 +30,5 @@ popd
 pushd "$DST_DIR"
 
 git rm -r "doc/standardisation"
-git rm "appl/popper/pop3.rfc1081"
-git rm "appl/popper/pop3e.rfc1082"
 
 popd
