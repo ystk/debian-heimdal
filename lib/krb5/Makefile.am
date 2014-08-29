@@ -15,7 +15,8 @@ noinst_PROGRAMS =				\
 	test_gic				\
 	test_kuserok				\
 	test_renew				\
-	test_rfc3961				
+	test_rfc3961
+
 
 noinst_LTLIBRARIES =				\
 	librfc3961.la
@@ -43,6 +44,7 @@ TESTS =						\
 	test_pkinit_dh2key			\
 	test_pknistkdf				\
 	test_time				\
+	test_expand_toks			\
 	test_x500
 
 check_DATA = test_config_strings.out
@@ -67,7 +69,7 @@ libkrb5_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/ipc/libheim-ipcc.la \
 	$(top_builddir)/lib/wind/libwind.la \
-	$(top_builddir)/base/libheimbase.la \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIB_pkinit) \
 	$(use_sqlite) \
 	$(LIB_com_err) \
@@ -144,9 +146,11 @@ dist_libkrb5_la_SOURCES =			\
 	data.c					\
 	db_plugin.c				\
 	db_plugin.h				\
+	dcache.c				\
 	deprecated.c				\
 	digest.c				\
 	eai_to_heim_errno.c			\
+        enomem.c                                \
 	error_string.c				\
 	expand_hostname.c			\
 	expand_path.c				\
@@ -178,6 +182,7 @@ dist_libkrb5_la_SOURCES =			\
 	krb5-v4compat.h				\
 	krbhst.c				\
 	kuserok.c				\
+	kuserok_plugin.h			\
 	log.c					\
 	mcache.c				\
 	misc.c					\
@@ -223,6 +228,7 @@ dist_libkrb5_la_SOURCES =			\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
+	store_sock.c				\
 	plugin.c				\
 	ticket.c				\
 	time.c					\
@@ -245,7 +251,22 @@ if versionscript
 libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
-$(libkrb5_la_OBJECTS) $(verify_krb5_conf_OBJECTS) $(librfc3961_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h krb5_err.h heim_err.h k524_err.h krb5_err.h krb_err.h k524_err.h
+ALL_OBJECTS  = $(libkrb5_la_OBJECTS)
+ALL_OBJECTS += $(verify_krb5_conf_OBJECTS)
+ALL_OBJECTS += $(librfc3961_la_OBJECTS)
+ALL_OBJECTS += $(librfc3961_la_OBJECTS)
+ALL_OBJECTS += $(krbhst_test_OBJECTS)
+ALL_OBJECTS += $(test_alname_OBJECTS)
+ALL_OBJECTS += $(test_crypto_OBJECTS)
+ALL_OBJECTS += $(test_forward_OBJECTS)
+ALL_OBJECTS += $(test_get_addrs_OBJECTS)
+ALL_OBJECTS += $(test_gic_OBJECTS)
+ALL_OBJECTS += $(test_kuserok_OBJECTS)
+ALL_OBJECTS += $(test_renew_OBJECTS)
+ALL_OBJECTS += $(test_rfc3961_OBJECTS)
+
+$(ALL_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
+$(ALL_OBJECTS): krb5_err.h heim_err.h k524_err.h krb5_err.h krb_err.h k524_err.h
 
 librfc3961_la_SOURCES =				\
 	crc.c					\
@@ -263,6 +284,7 @@ librfc3961_la_SOURCES =				\
 	crypto-rand.c				\
 	crypto-stubs.c				\
 	data.c					\
+	enomem.c				\
 	error_string.c				\
 	keyblock.c				\
 	n-fold.c				\
@@ -339,9 +361,11 @@ man_MANS =					\
 
 dist_include_HEADERS = \
 	krb5.h \
-	krb5-protos.h \
-	krb5-private.h \
+	$(srcdir)/krb5-protos.h \
 	krb5_ccapi.h
+
+noinst_HEADERS = $(srcdir)/krb5-private.h
+
 
 nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 

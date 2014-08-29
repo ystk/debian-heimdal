@@ -82,7 +82,7 @@ static krb5_error_code parse_list(struct fileptr *f, unsigned *lineno,
 				  krb5_config_binding **parent,
 				  const char **err_message);
 
-krb5_config_section *
+KRB5_LIB_FUNCTION krb5_config_section * KRB5_LIB_CALL
 _krb5_config_get_entry(krb5_config_section **parent, const char *name, int type)
 {
     krb5_config_section **q;
@@ -425,7 +425,7 @@ krb5_config_parse_file_multi (krb5_context context,
      * current users home directory. The behavior can be disabled and
      * enabled by calling krb5_set_home_dir_access().
      */
-    if (fname[0] == '~' && fname[1] == '/') {
+    if (ISTILDE(fname[0]) && ISPATHSEP(fname[1])) {
 #ifndef KRB5_USE_PATH_TOKENS
 	const char *home = NULL;
 
@@ -447,21 +447,14 @@ krb5_config_parse_file_multi (krb5_context context,
 	    int aret;
 
 	    aret = asprintf(&newfname, "%s%s", home, &fname[1]);
-	    if (aret == -1 || newfname == NULL) {
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if (aret == -1 || newfname == NULL)
+		return krb5_enomem(context);
 	    fname = newfname;
 	}
 #else  /* KRB5_USE_PATH_TOKENS */
 	if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 ||
 	    newfname == NULL)
-	{
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	    return krb5_enomem(context);
 	fname = newfname;
 #endif
     }
@@ -699,7 +692,7 @@ _krb5_config_get (krb5_context context,
 }
 
 
-const void *
+KRB5_LIB_FUNCTION const void * KRB5_LIB_CALL
 _krb5_config_vget (krb5_context context,
 		   const krb5_config_section *c,
 		   int type,

@@ -1,6 +1,6 @@
 # $Id$
 
-SUFFIXES = .et .h
+SUFFIXES = .et .h .pc.in .pc
 
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include
 
@@ -66,17 +66,31 @@ libexec_heimdaldir = $(libexecdir)/heimdal
 install-suid-programs:
 	@foo='$(bin_SUIDS)'; \
 	for file in $$foo; do \
-	x=$(DESTDIR)$(bindir)/$$file; \
-	if chown 0:0 $$x && chmod u+s $$x; then :; else \
-	echo "*"; \
-	echo "* Failed to install $$x setuid root"; \
-	echo "*"; \
-	fi; done
+		x=$(DESTDIR)$(bindir)/$$file; \
+		if chown 0:0 $$x && chmod u+s $$x; then :; else \
+			echo "*"; \
+			echo "* Failed to install $$x setuid root"; \
+			echo "*"; \
+		fi; \
+	done
 
-install-exec-hook: install-suid-programs
+install-exec-local: install-suid-programs
 
-install-build-headers:: $(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(nobase_include_HEADERS)
-	@foo='$(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ)'; \
+codesign-all:
+	@if [ X"$$CODE_SIGN_IDENTITY" != X ] ; then \
+		foo='$(bin_PROGRAMS) $(sbin_PROGRAMS) $(libexec_PROGRAMS)' ; \
+		for file in $$foo ; do \
+			echo "CODESIGN $$file" ; \
+			codesign -f -s "$$CODE_SIGN_IDENTITY" $$file || exit 1 ; \
+		done ; \
+	fi
+	
+
+
+all-local: codesign-all
+
+install-build-headers:: $(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(nobase_include_HEADERS) $(noinst_HEADERS)
+	@foo='$(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(noinst_HEADERS)'; \
 	for f in $$foo; do \
 		f=`basename $$f`; \
 		if test -f "$(srcdir)/$$f"; then file="$(srcdir)/$$f"; \
@@ -244,7 +258,7 @@ LIB_krb5 = $(top_builddir)/lib/krb5/libkrb5.la \
 LIB_gssapi = $(top_builddir)/lib/gssapi/libgssapi.la
 endif
 
-LIB_heimbase = $(top_builddir)/base/libheimbase.la
+LIB_heimbase = $(top_builddir)/lib/base/libheimbase.la
 
 if DCE
 LIB_kdfs = $(top_builddir)/lib/kdfs/libkdfs.la

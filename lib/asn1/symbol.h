@@ -36,7 +36,6 @@
 #ifndef _SYMBOL_H
 #define _SYMBOL_H
 
-#include <roken.h>
 #include "asn1_queue.h"
 
 enum typetype {
@@ -130,6 +129,7 @@ struct type {
     struct tagtype tag;
     struct range *range;
     struct constraint_spec *constraint;
+    unsigned long id;
 };
 
 typedef struct type Type;

@@ -39,7 +39,7 @@ gen_files_pkinit = asn1_pkinit_asn1.x
 gen_files_pkcs12 = asn1_pkcs12_asn1.x
 gen_files_pkcs8 = asn1_pkcs8_asn1.x
 gen_files_pkcs9 = asn1_pkcs9_asn1.x
-gen_files_test_template = test_template_asn1-template.c
+gen_files_test_template = test_template_asn1-template.x
 gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
@@ -97,8 +97,10 @@ dist_libasn1base_la_SOURCES =			\
 	der_copy.c				\
 	der_cmp.c				\
 	der_format.c				\
+	fuzzer.c				\
 	heim_asn1.h				\
 	extra.c					\
+	roken_rename.h				\
 	template.c				\
 	timegm.c
 
@@ -137,8 +139,9 @@ CLEANFILES = \
 	$(gen_files_pkcs12) \
 	$(gen_files_digest) \
 	$(gen_files_kx509) \
+	$(gen_files_test) \
 	$(gen_files_test_template) \
-	$(gen_files_test) $(nodist_check_gen_SOURCES) \
+	$(nodist_check_gen_SOURCES) \
 	asn1_err.c asn1_err.h \
 	rfc2459_asn1_files rfc2459_asn1*.h* \
 	cms_asn1_files cms_asn1*.h* \
@@ -149,10 +152,12 @@ CLEANFILES = \
 	pkcs12_asn1_files pkcs12_asn1*.h* \
 	digest_asn1_files digest_asn1*.h* \
 	kx509_asn1_files kx509_asn1*.h* \
-	test_template_asn1_files test_template_asn1*.h* \
-	test_asn1_files test_asn1*.h*
+	test_asn1_files test_asn1*.h* \
+	test_template_asn1* \
+	asn1_*.x
 
-dist_include_HEADERS = der.h heim_asn1.h der-protos.h der-private.h
+dist_include_HEADERS = der.h heim_asn1.h
+dist_include_HEADERS += $(srcdir)/der-protos.h $(srcdir)/der-private.h
 dist_include_HEADERS += asn1-common.h
 
 nodist_include_HEADERS = asn1_err.h
@@ -184,7 +189,7 @@ $(asn1_compile_OBJECTS): asn1parse.h asn1parse.c $(srcdir)/der-protos.h $(srcdir
 $(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers) asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
 $(libasn1base_la_OBJECTS): asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
 $(check_gen_OBJECTS): test_asn1.h
-$(check_template_OBJECTS): test_template_asn1.h test_template_asn1-priv.h test_template_asn1_files
+$(check_template_OBJECTS): test_asn1_files
 $(asn1_print_OBJECTS): krb5_asn1.h
 
 asn1parse.h: asn1parse.c
@@ -198,8 +203,8 @@ $(gen_files_digest) digest_asn1.hx digest_asn1-priv.hx: digest_asn1_files
 $(gen_files_kx509) kx509_asn1.hx kx509_asn1-priv.hx: kx509_asn1_files
 $(gen_files_rfc2459) rfc2459_asn1.hx rfc2459_asn1-priv.hx: rfc2459_asn1_files
 $(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
-$(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
+$(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 	$(ASN1_COMPILE) --one-code-file --preserve-binary=TBSCertificate --preserve-binary=TBSCRLCertList --preserve-binary=Name --sequence=GeneralNames --sequence=Extensions --sequence=CRLDistributionPoints $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
@@ -257,8 +262,19 @@ EXTRA_DIST =		\
 	test.gen	\
 	version-script.map
 
-$(srcdir)/der-protos.h:
+DER_PROTOS = $(srcdir)/der-protos.h $(srcdir)/der-private.h
+
+ALL_OBJECTS  = $(libasn1_la_OBJECTS)
+ALL_OBJECTS += $(libasn1base_la_OBJECTS)
+ALL_OBJECTS += $(asn1_print_OBJECTS)
+ALL_OBJECTS += $(asn1_compile_OBJECTS)
+ALL_OBJECTS += $(asn1_gen_OBJECTS)
+ALL_OBJECTS += $(check_template_OBJECTS)
+
+$(ALL_OBJECTS): $(DER_PROTOS) asn1_err.h
+
+$(srcdir)/der-protos.h: $(dist_libasn1base_la_SOURCES)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) || rm -f der-protos.h
 
-$(srcdir)/der-private.h:
+$(srcdir)/der-private.h: $(dist_libasn1base_la_SOURCES)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) || rm -f der-private.h

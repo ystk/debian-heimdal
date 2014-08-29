@@ -124,6 +124,7 @@ kadm5_ret_t
 kadm5_log_reinit (kadm5_server_context *context)
 {
     int fd;
+    int ret;
     kadm5_log_context *log_context = &context->log_context;
 
     if (log_context->log_fd != -1) {
@@ -131,12 +132,18 @@ kadm5_log_reinit (kadm5_server_context *context)
 	close (log_context->log_fd);
 	log_context->log_fd = -1;
     }
-    fd = open (log_context->log_file, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    fd = open (log_context->log_file, O_RDWR | O_CREAT, 0600);
     if (fd < 0)
 	return errno;
     if (flock (fd, LOCK_EX) < 0) {
+	ret = errno;
 	close (fd);
-	return errno;
+	return ret;
+    }
+    if (ftruncate(fd, 0) < 0) {
+	ret = errno;
+	close(fd);
+	return ret;
     }
 
     log_context->version = 0;
@@ -620,7 +627,7 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	}
     }
     if (mask & KADM5_LAST_PWD_CHANGE) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_LAST_PWD_CHANGE");
     }
     if (mask & KADM5_ATTRIBUTES) {
 	ent.entry.flags = log_ent.entry.flags;
@@ -660,16 +667,13 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	ent.entry.kvno = log_ent.entry.kvno;
     }
     if (mask & KADM5_MKVNO) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_KVNO");
     }
     if (mask & KADM5_AUX_ATTRIBUTES) {
-	abort ();		/* XXX */
-    }
-    if (mask & KADM5_POLICY) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_AUX_ATTRIBUTES");
     }
     if (mask & KADM5_POLICY_CLR) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_POLICY_CLR");
     }
     if (mask & KADM5_MAX_RLIFE) {
 	if (log_ent.entry.max_renew == NULL) {
@@ -687,13 +691,13 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	}
     }
     if (mask & KADM5_LAST_SUCCESS) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_LAST_SUCCESS");
     }
     if (mask & KADM5_LAST_FAILED) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_LAST_FAILED");
     }
     if (mask & KADM5_FAIL_AUTH_COUNT) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_FAIL_AUTH_COUNT");
     }
     if (mask & KADM5_KEY_DATA) {
 	size_t num;

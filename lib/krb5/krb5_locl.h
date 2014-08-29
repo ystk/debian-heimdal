@@ -47,6 +47,10 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#ifdef HAVE_POLL_H
+#include <sys/poll.h>
+#endif
+
 #include <krb5-types.h>
 
 #ifdef HAVE_SYS_TYPES_H
@@ -257,6 +261,7 @@ typedef struct krb5_context_data {
     char **default_realms;
     time_t max_skew;
     time_t kdc_timeout;
+    time_t host_timeout;
     unsigned max_retries;
     int32_t kdc_sec_offset;
     int32_t kdc_usec_offset;
@@ -289,22 +294,28 @@ typedef struct krb5_context_data {
     int default_cc_name_set;
     void *mutex;			/* protects error_string */
     int large_msg_size;
+    int max_msg_size;
+    int tgs_negative_timeout;		/* timeout for TGS negative cache */
     int flags;
 #define KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME	1
 #define KRB5_CTX_F_CHECK_PAC			2
 #define KRB5_CTX_F_HOMEDIR_ACCESS		4
 #define KRB5_CTX_F_SOCKETS_INITIALIZED          8
 #define KRB5_CTX_F_RD_REQ_IGNORE		16
+#define KRB5_CTX_F_FCACHE_STRICT_CHECKING	32
     struct send_to_kdc *send_to_kdc;
 #ifdef PKINIT
     hx509_context hx509ctx;
 #endif
+    unsigned int num_kdc_requests;
 } krb5_context_data;
 
 #ifndef KRB5_USE_PATH_TOKENS
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"
+#define KRB5_DEFAULT_CCNAME_DIR "DIR:/tmp/krb5cc_%{uid}_dir/"
 #else
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:%{TEMP}/krb5cc_%{uid}"
+#define KRB5_DEFAULT_CCNAME_DIR "DIR:%{TEMP}/krb5cc_%{uid}_dir/"
 #endif
 #define KRB5_DEFAULT_CCNAME_API "API:"
 #define KRB5_DEFAULT_CCNAME_KCM_KCM "KCM:%{uid}"
@@ -336,6 +347,14 @@ typedef struct krb5_context_data {
 #define KRB5_FORWARDABLE_DEFAULT TRUE
 #endif
 
+#ifndef KRB5_CONFIGURATION_CHANGE_NOTIFY_NAME
+#define KRB5_CONFIGURATION_CHANGE_NOTIFY_NAME "org.h5l.Kerberos.configuration-changed"
+#endif
+
+#ifndef KRB5_FALLBACK_DEFAULT
+#define KRB5_FALLBACK_DEFAULT TRUE
+#endif
+
 #ifdef PKINIT
 
 struct krb5_pk_identity {
@@ -355,5 +374,12 @@ enum krb5_pk_type {
 };
 
 #endif /* PKINIT */
+
+#define ISTILDE(x) (x == '~')
+#ifdef _WIN32
+# define ISPATHSEP(x) (x == '/' || x =='\\')
+#else
+# define ISPATHSEP(x) (x == '/')
+#endif
 
 #endif /* __KRB5_LOCL_H__ */

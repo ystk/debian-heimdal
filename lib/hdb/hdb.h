@@ -36,6 +36,8 @@
 #ifndef __HDB_H__
 #define __HDB_H__
 
+#include <stdio.h>
+
 #include <krb5.h>
 
 #include <hdb_err.h>
@@ -100,7 +102,7 @@ typedef struct hdb_entry_ex {
  * query the backend database when talking about principals.
  */
 
-typedef struct HDB{
+typedef struct HDB {
     void *hdb_db;
     void *hdb_dbc; /** don't use, only for DB3 */
     char *hdb_name;
@@ -261,23 +263,31 @@ typedef struct HDB{
     krb5_error_code (*hdb_check_s4u2self)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
 }HDB;
 
-#define HDB_INTERFACE_VERSION	7
+#define HDB_INTERFACE_VERSION	8
 
-struct hdb_so_method {
-    int version;
+struct hdb_method {
+    int			version;
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
     const char *prefix;
     krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
+};
+
+/* dump entry format, for hdb_print_entry() */
+typedef enum hdb_dump_format {
+    HDB_DUMP_HEIMDAL = 0,
+    HDB_DUMP_MIT = 1,
+} hdb_dump_format_t;
+
+struct hdb_print_entry_arg {
+    FILE *out;
+    hdb_dump_format_t fmt;
 };
 
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
 					      hdb_entry_ex*, void*);
 extern krb5_kt_ops hdb_kt_ops;
-
-struct hdb_method {
-    int interface_version;
-    const char *prefix;
-    krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
-};
+extern krb5_kt_ops hdb_get_kt_ops;
 
 extern const int hdb_interface_version;
 

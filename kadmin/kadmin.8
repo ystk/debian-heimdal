@@ -110,10 +110,13 @@ Commands include:
 .Op Fl Fl attributes= Ns Ar attributes
 .Op Fl Fl expiration-time= Ns Ar time
 .Op Fl Fl pw-expiration-time= Ns Ar time
+.Op Fl Fl policy= Ns Ar policy-name
 .Ar principal...
 .Bd -ragged -offset indent
 Adds a new principal to the database. The options not passed on the
 command line will be promped for.
+The only policy supported by Heimdal servers is
+.Q1 default .
 .Ed
 .Pp
 .Nm add_enctype
@@ -201,11 +204,15 @@ and
 .Op Fl Fl expiration-time= Ns Ar time
 .Op Fl Fl pw-expiration-time= Ns Ar time
 .Op Fl Fl kvno= Ns Ar number
+.Op Fl Fl policy= Ns Ar policy-name
 .Ar principal...
 .Bd -ragged -offset indent
 Modifies certain attributes of a principal. If run without command
 line options, you will be prompted. With command line options, it will
 only change the ones specified.
+.Pp
+Only policy supported by Heimdal is
+.Q1 default .
 .Pp
 Possible attributes are:
 .Li new-princ ,
@@ -289,14 +296,18 @@ When running in local mode, the following commands can also be used:
 .Pp
 .Nm dump
 .Op Fl d | Fl Fl decrypt
+.Op Fl f Ns Ar format | Fl Fl format= Ns Ar format
 .Op Ar dump-file
 .Bd -ragged -offset indent
 Writes the database in
-.Dq human readable
+.Dq machine readable text
 form to the specified file, or standard out. If the database is
 encrypted, the dump will also have encrypted keys, unless
 .Fl Fl decrypt
-is used.
+is used.  If
+.Fl Fl format=MIT
+is used then the dump will be in MIT format.  Otherwise it will be in
+Heimdal format.
 .Ed
 .Pp
 .Nm init

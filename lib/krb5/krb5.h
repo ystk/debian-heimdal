@@ -283,9 +283,9 @@ typedef enum krb5_key_usage {
     KRB5_KU_FAST_FINISHED = 53,
     /* FAST finished checksum */
     KRB5_KU_ENC_CHALLENGE_CLIENT = 54,
-    /* fast challange from client */
+    /* fast challenge from client */
     KRB5_KU_ENC_CHALLENGE_KDC = 55,
-    /* fast challange from kdc */
+    /* fast challenge from kdc */
     KRB5_KU_DIGEST_ENCRYPT = -18,
     /* Encryption key usage used in the digest encryption field */
     KRB5_KU_DIGEST_OPAQUE = -19,
@@ -655,6 +655,8 @@ typedef struct krb5_auth_context_data {
 
     krb5_keytype keytype;	/* ¿requested key type ? */
     krb5_cksumtype cksumtype;	/* ¡requested checksum type! */
+    
+    AuthorizationData *auth_data;
 
 }krb5_auth_context_data, *krb5_auth_context;
 
@@ -688,6 +690,13 @@ typedef EncAPRepPart krb5_ap_rep_enc_part;
 #define KRB5_ANON_REALM ("WELLKNOWN:ANONYMOUS")
 #define KRB5_WELLKNOWN_ORG_H5L_REALM ("WELLKNOWN:ORG.H5L")
 #define KRB5_DIGEST_NAME ("digest")
+
+
+#define KRB5_PKU2U_REALM_NAME ("WELLKNOWN:PKU2U")
+#define KRB5_LKDC_REALM_NAME ("WELLKNOWN:COM.APPLE.LKDC")
+
+#define KRB5_GSS_HOSTBASED_SERVICE_NAME ("WELLKNOWN:ORG.H5L.HOSTBASED-SERVICE")
+#define KRB5_GSS_REFERALS_REALM_NAME ("WELLKNOWN:ORG.H5L.REFERALS-REALM")
 
 typedef enum {
     KRB5_PROMPT_TYPE_PASSWORD		= 0x1,
@@ -822,6 +831,7 @@ enum {
     KRB5_KRBHST_FLAGS_LARGE_MSG	  = 2
 };
 
+typedef krb5_error_code (*krb5_sendto_prexmit)(krb5_context, int, void *, int, krb5_data *);
 typedef krb5_error_code
 (KRB5_CALLCONV * krb5_send_to_kdc_func)(krb5_context, void *, krb5_krbhst_info *, time_t,
 					const krb5_data *, krb5_data *);
@@ -830,7 +840,9 @@ typedef krb5_error_code
 enum {
     KRB5_PRINCIPAL_PARSE_NO_REALM = 1, /**< Require that there are no realm */
     KRB5_PRINCIPAL_PARSE_REQUIRE_REALM = 2, /**< Require a realm present */
-    KRB5_PRINCIPAL_PARSE_ENTERPRISE = 4 /**< Parse as a NT-ENTERPRISE name */
+    KRB5_PRINCIPAL_PARSE_ENTERPRISE = 4, /**< Parse as a NT-ENTERPRISE name */
+    KRB5_PRINCIPAL_PARSE_IGNORE_REALM = 8, /**< Ignore realm if present */
+    KRB5_PRINCIPAL_PARSE_NO_DEF_REALM = 16 /**< Don't default the realm */
 };
 
 /** flags for krb5_unparse_name_flags */
@@ -843,8 +855,13 @@ enum {
 typedef struct krb5_sendto_ctx_data *krb5_sendto_ctx;
 
 #define KRB5_SENDTO_DONE	0
-#define KRB5_SENDTO_RESTART	1
+#define KRB5_SENDTO_RESET	1
 #define KRB5_SENDTO_CONTINUE	2
+#define KRB5_SENDTO_TIMEOUT	3
+#define KRB5_SENDTO_INITIAL	4
+#define KRB5_SENDTO_FILTER	5
+#define KRB5_SENDTO_FAILED	6
+#define KRB5_SENDTO_KRBHST	7
 
 typedef krb5_error_code
 (KRB5_CALLCONV * krb5_sendto_ctx_func)(krb5_context, krb5_sendto_ctx, void *,
@@ -855,6 +872,8 @@ enum krb5_plugin_type {
     PLUGIN_TYPE_DATA = 1,
     PLUGIN_TYPE_FUNC
 };
+
+#define KRB5_PLUGIN_INVOKE_ALL  1
 
 struct credentials; /* this is to keep the compiler happy */
 struct getargs;
@@ -910,8 +929,8 @@ typedef enum krb5_name_canon_rule_options {
 	KRB5_NCRO_SECURE = 1 << 2
 } krb5_name_canon_rule_options;
 
-typedef struct krb5_name_canon_rule *krb5_name_canon_rule;
-typedef struct krb5_name_canon_iterator *krb5_name_canon_iterator;
+typedef struct krb5_name_canon_rule_data *krb5_name_canon_rule;
+typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
 
 /*
  *
@@ -928,6 +947,7 @@ extern KRB5_LIB_VARIABLE const char *krb5_defkeyname;
 
 
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops;
+extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops;
@@ -946,6 +966,7 @@ extern KRB5_LIB_VARIABLE const char *krb5_cc_type_file;
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_memory;
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_kcm;
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_scc;
+extern KRB5_LIB_VARIABLE const char *krb5_cc_type_dcc;
 
 #endif /* __KRB5_H__ */
 

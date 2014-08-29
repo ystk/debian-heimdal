@@ -1,6 +1,6 @@
 # $Id$
 
-HEIMDAL_X509_1.2 {
+HEIMDAL_X509_1.3 {
 	global:
 		_hx509_cert_assign_key;
 		_hx509_cert_private_key;
@@ -46,6 +46,7 @@ HEIMDAL_X509_1.2 {
 		hx509_ca_tbs_set_notBefore;
 		hx509_ca_tbs_set_proxy;
 		hx509_ca_tbs_set_serialnumber;
+		hx509_ca_tbs_set_signature_algorithm;
 		hx509_ca_tbs_set_spki;
 		hx509_ca_tbs_set_subject;
 		hx509_ca_tbs_set_template;
@@ -209,6 +210,7 @@ HEIMDAL_X509_1.2 {
 		hx509_revoke_init;
 		hx509_revoke_ocsp_print;
 		hx509_revoke_verify;
+		hx509_revoke_print;
 		hx509_set_error_string;
 		hx509_set_error_stringv;
 		hx509_signature_md5;

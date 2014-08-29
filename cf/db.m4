@@ -22,6 +22,11 @@ AC_ARG_ENABLE(ndbm-db,
                                       [if you don't want ndbm db]),[
 ])
 
+AC_ARG_ENABLE(mdb-db,
+                       AS_HELP_STRING([--disable-mdb-db],
+                                      [if you don't want OpenLDAP libmdb db]),[
+])
+
 have_ndbm=no
 db_type=unknown
 
@@ -38,6 +43,7 @@ AS_IF([test "x$with_berkeley_db" != xno],
 		    fi
 		   ])],
     [AC_CHECK_HEADERS([					\
+	           db6/db.h				\
 	           db5/db.h				\
 	           db4/db.h				\
 	           db3/db.h				\
@@ -50,6 +56,8 @@ dnl db_create is used by db3 and db4 and db5
   #include <stdio.h>
   #ifdef HAVE_DBHEADER
   #include <$dbheader/db.h>
+  #elif HAVE_DB6_DB_H
+  #include <db6/db.h>
   #elif HAVE_DB5_DB_H
   #include <db5/db.h>
   #elif HAVE_DB4_DB_H
@@ -119,6 +127,14 @@ dnl test for ndbm compatability
   fi
 
 ]) # fi berkeley db
+
+if test "$enable_mdb_db" != "no"; then
+  if test "$db_type" = "unknown"; then
+    AC_CHECK_HEADER(mdb.h, [
+		AC_CHECK_LIB(mdb, mdb_env_create, db_type=mdb; DBLIB="-lmdb"
+		AC_DEFINE(HAVE_MDB, 1, [define if you have the OpenLDAP mdb library]))])
+  fi
+fi
 
 if test "$enable_ndbm_db" != "no"; then
 
@@ -215,6 +231,7 @@ fi
 
 AM_CONDITIONAL(HAVE_DB1, test "$db_type" = db1)dnl
 AM_CONDITIONAL(HAVE_DB3, test "$db_type" = db3)dnl
+AM_CONDITIONAL(HAVE_MDB, test "$db_type" = mdb)dnl
 AM_CONDITIONAL(HAVE_NDBM, test "$db_type" = ndbm)dnl
 AM_CONDITIONAL(HAVE_DBHEADER, test "$dbheader" != "")dnl
 

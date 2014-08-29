@@ -38,7 +38,7 @@ gen_files_hdb = \
 	asn1_Keys.x
 
 CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \
-	hdb_asn1{,-priv}.h* hdb_asn1_files hdb_asn1-template.c*
+	hdb_asn1{,-priv}.h* hdb_asn1_files hdb_asn1-template.[cx]
 
 LDADD = libhdb.la \
 	$(LIB_openldap) \
@@ -72,7 +72,7 @@ if versionscript
 libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
-noinst_PROGRAMS = test_dbinfo test_hdbkeys test_mkey
+noinst_PROGRAMS = test_dbinfo test_hdbkeys test_mkey test_hdbplugin
 
 dist_libhdb_la_SOURCES =			\
 	common.c				\
@@ -83,9 +83,9 @@ dist_libhdb_la_SOURCES =			\
 	hdb.c					\
 	hdb-sqlite.c				\
 	hdb-keytab.c				\
+	hdb-mdb.c				\
 	hdb-mitdb.c				\
 	hdb_locl.h				\
-	hdb-private.h				\
 	keys.c					\
 	keytab.c				\
 	dbinfo.c				\
@@ -97,8 +97,10 @@ nodist_libhdb_la_SOURCES = $(BUILT_SOURCES)
 
 libhdb_la_DEPENDENCIES = version-script.map
 
-include_HEADERS = hdb.h hdb-protos.h
+include_HEADERS = hdb.h $(srcdir)/hdb-protos.h
 nodist_include_HEADERS =  hdb_err.h hdb_asn1.h
+
+noinst_HEADERS = $(srcdir)/hdb-private.h
 
 libhdb_la_LIBADD = \
 	$(LIB_com_err) \
@@ -111,13 +113,22 @@ libhdb_la_LIBADD = \
 	$(DBLIB) \
 	$(LIB_NDBM)
 
-$(libhdb_la_OBJECTS): $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
+HDB_PROTOS = $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
+
+ALL_OBJECTS  = $(libhdb_la_OBJECTS)
+ALL_OBJECTS += $(test_dbinfo_OBJECTS)
+ALL_OBJECTS += $(test_hdbkeys_OBJECTS)
+ALL_OBJECTS += $(test_mkey_OBJECTS)
+ALL_OBJECTS += $(test_hdbplugin_OBJECTS)
+
+$(ALL_OBJECTS): $(HDB_PROTOS)
+
 $(libhdb_la_OBJECTS): hdb_asn1.h hdb_asn1-priv.h hdb_err.h
 
-$(srcdir)/hdb-protos.h:
+$(srcdir)/hdb-protos.h: $(dist_libhdb_la_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -o hdb-protos.h $(dist_libhdb_la_SOURCES) || rm -f hdb-protos.h
 
-$(srcdir)/hdb-private.h:
+$(srcdir)/hdb-private.h: $(dist_libhdb_la_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -p hdb-private.h $(dist_libhdb_la_SOURCES) || rm -f hdb-private.h
 
 $(gen_files_hdb) hdb_asn1.hx hdb_asn1-priv.hx: hdb_asn1_files
@@ -129,6 +140,7 @@ test_dbinfo_LIBS = libhdb.la
 
 test_hdbkeys_LIBS = ../krb5/libkrb5.la libhdb.la
 test_mkey_LIBS = $(test_hdbkeys_LIBS)
+test_hdbplugin_LIBS = $(test_hdbkeys_LIBS)
 
 # to help stupid solaris make
 
