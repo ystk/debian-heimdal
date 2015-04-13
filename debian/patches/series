@@ -18,3 +18,4 @@ installsh
 048_private_libs
 049_testkdc_timeout
 050_kadmin_to_usr_bin
+051_bug746486-memleak

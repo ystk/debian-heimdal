@@ -1,0 +1,33 @@
+Description: Fix memory leak in Heimdal-KDC
+ It has been discovered that heimdal-kdc doesn't a per-request memory allocation
+ which can be lead to serious memory leak
+
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=746486
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: upstream, https://github.com/heimdal/heimdal/commit/4b0121f5458e6696e87bd2a263affe33d926e1b4
+Bug: https://github.com/heimdal/heimdal/issues/93
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=746486
+Last-Update: <2014-08-24>
+
+--- heimdal-1.6~git20120403+dfsg1.orig/kdc/process.c
++++ heimdal-1.6~git20120403+dfsg1/kdc/process.c
+@@ -212,12 +212,12 @@ krb5_kdc_process_request(krb5_context co
+ 	    if (services[i].flags & KS_NO_LENGTH)
+ 		*prependlength = 0;
+ 
+-	    heim_auto_release_drain(pool);
++	    heim_release(pool);
+ 	    return ret;
+ 	}
+     }
+ 
+-    heim_auto_release_drain(pool);
++    heim_release(pool);
+ 
+     return -1;
+ }

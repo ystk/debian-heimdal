@@ -1,3 +1,16 @@
+heimdal (1.6~rc2+dfsg-9) unstable; urgency=medium
+
+  [ Jelmer Vernooij ]
+  * Add 051_bug746486-memleak: cherry-pick memory leak fix in KDC from
+    upstream. Thanks GALAMBOS Daniel. Closes: #746486
+  * Add Turkish debconf translation. Thanks Mert Dirik. Closes: #759877
+
+  [ Andreas Beckmann ]
+  * heimdal-clients.postinst: Cleanup obsolete telnet, rsh and pop
+    alternatives.  (Closes: #768243)
+
+ -- Jelmer Vernooij <jelmer@debian.org>  Mon, 25 Aug 2014 13:52:44 +0200
+
 heimdal (1.6~rc2+dfsg-8) unstable; urgency=low
 
   * Add branch to Vcs-Git header. Closes: #753843

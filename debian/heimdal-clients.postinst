@@ -1,5 +1,16 @@
 #!/bin/sh -e
 
+if [ "$1" = "configure" ]
+then
+    if dpkg --compare-versions "$2" lt-nl "1.6~rc2+dfsg-9~"
+    then
+	for i in telnet rsh rcp
+	do
+	    update-alternatives --remove $i /usr/bin/k$i
+	done
+    fi
+fi
+
 for i in ftp pagsh
 do
     update-alternatives --install /usr/bin/$i $i /usr/bin/k$i 23 \
