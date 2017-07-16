@@ -1,3 +1,11 @@
+heimdal (1.6~rc2+dfsg-9+deb8u1) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * CVE-2017-11103: Orpheus' Lyre KDC-REP service name validation
+    (Closes: #868208)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sun, 16 Jul 2017 10:01:46 +0200
+
 heimdal (1.6~rc2+dfsg-9) unstable; urgency=medium
 
   [ Jelmer Vernooij ]

@@ -19,3 +19,4 @@ installsh
 049_testkdc_timeout
 050_kadmin_to_usr_bin
 051_bug746486-memleak
+CVE-2017-11103-Orpheus-Lyre-KDC-REP-service-name-val.patch
