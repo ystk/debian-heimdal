@@ -1,3 +1,26 @@
+heimdal (1.6~rc2+dfsg-9+deb8u3) jessie-security; urgency=medium
+
+  * Non-maintainer upload by the ELTS Team.
+  * Fix Y2038 test failures by taking certificates from stretch instead.
+
+ -- Helmut Grohne <helmut@subdivi.de>  Wed, 08 Feb 2023 14:05:29 +0100
+
+heimdal (1.6~rc2+dfsg-9+deb8u2) jessie-security; urgency=medium
+
+  * Non-maintainer upload by the ELTS Team. (Closes: #1024187)
+  * Update test certificates to fix FTBFS.
+  * Fix CVE-2018-16860 (Closes: #928966)
+  * Fix CVE-2019-14870 (Closes: #946786)
+  * Fix CVE-2021-3671 (Closes: #996586)
+  * Fix CVE-2021-44758 (PartOf: #1024187)
+  * Fix CVE-2022-3437 (PartOf: #1024187)
+    + Do not introduce CVE-2022-45142
+  * Fix CVE-2022-41916 (PartOf: #1024187)
+  * Fix CVE-2022-42898 (PartOf: #1024187)
+  * Fix CVE-2022-44640 (PartOf: #1024187)
+
+ -- Helmut Grohne <helmut@subdivi.de>  Tue, 07 Feb 2023 21:18:39 +0100
+
 heimdal (1.6~rc2+dfsg-9+deb8u1) jessie-security; urgency=high
 
   * Non-maintainer upload by the Security Team.

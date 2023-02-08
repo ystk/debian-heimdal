@@ -5,6 +5,10 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 %:
 	dh $* --with autoreconf --parallel
 
+update_certificates:
+	# Update expired certificates using stretch/7.1.0
+	cp debian/updated-lib-hx509-data/* lib/hx509/data
+
 override_dh_autoreconf:
 	dh_autoreconf --as-needed
 
@@ -29,8 +33,8 @@ override_dh_makeshlibs:
 	dh_makeshlibs -plibroken18-heimdal -V"libroken18-heimdal (>= 1.4.0~git20110226.dfsg.2-1)" -- -c4
 	dh_makeshlibs -plibwind0-heimdal -V"libwind0-heimdal (>= 1.4.0~git20110226.dfsg.1-1)" -- -c4
 
-override_dh_auto_test:
-	$(MAKE) check
+override_dh_auto_test: update_certificates
+	$(MAKE) check $(if $(filter terse,$(DEB_BUILD_OPTIONS)),,VERBOSE=1)
 
 override_dh_auto_configure:
 	./configure $(shell dpkg-buildflags --export=configure) \
@@ -104,6 +108,9 @@ override_dh_auto_clean::
 	rm -f lib/wind/normalize_table.c
 	rm -f lib/wind/normalize_table.h
 	rm -f lib/wind/*.pyc
+	set -e; for f in debian/updated-lib-hx509-data/*; do \
+		rm -f "lib/hx509/data/$${f#debian/updated-lib-hx509-data}"; \
+	done
 
 override_dh_install:
 	/bin/mkdir -p debian/heimdal-kdc/usr/share/heimdal-kdc
